@@ -172,8 +172,8 @@ int main(int argc, char** argv) {
 		if (rv == 1) {
 			struct sockaddr_in src_sock_ip;
 			char* msg = receive_udp_packet(&src_sock_ip);
-			printf("Received : '%s' from ip %s and port %d\n", msg, 
-					inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
+			printf("Received : '%s' from process %d\n", msg, 
+					get_id_from_port(ntohs(src_sock_ip.sin_port)));
 			perfect_links_deliver_loss(msg, &src_sock_ip);
 			//perfect_links_deliver(msg, &src_sock_ip);
 			//print_msg_sent();

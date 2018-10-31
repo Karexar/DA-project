@@ -62,11 +62,11 @@ void perfect_links_deliver_loss(char* msg,
 		sprintf(ack_msg, "a %s", msg);
 
 		if (get_random_bool(25)) {
-			printf("Ack '%s' sent\n", ack_msg);
+			printf("Send ack '%s' to process %d\n", ack_msg, src_id);
 			send_udp_packet(ack_msg, src_id);
 		}
 		else {
-			printf("Ack '%s' lost\n", ack_msg);
+			printf("Send ack '%s' to process %d LOST\n", ack_msg, src_id);
 		}
 
 		// If the message is not yet delivered, we deliver it

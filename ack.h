@@ -29,6 +29,7 @@ bool ack_times_up(double t_start);
 double get_cur_time();
 void resend_packets_if_needed();
 void print_msg_sent();
+void print_first_n_msg_sent(int n);
 void free_msg_sent();
 
 #endif
