@@ -11,7 +11,7 @@ typedef struct Delivered{
 		char *msg;
 } Delivered;
 
-void init_delivered(int total_broadcast);
+void init_delivered();
 void add_delivered(int port, char* msg);
 bool not_delivered_yet(int src_id, char* msg);
 void print_delivered();

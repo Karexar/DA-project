@@ -1,149 +1,126 @@
 #include "ack.h"
 
-static Msg_sent* msg_sent_first = NULL;
-static Msg_sent* msg_sent_last = NULL;
-double time_out = 1.0; // TODO : adjust
+static Ack* acks;
+static int acks_total_len = 1000;
+static int acks_len = 0;
+static int from_total_len = 0;
 
-void add_msg_sent(char* msg, int dst_process_id){
-	if (msg_sent_first == NULL) {
-		msg_sent_first = malloc(sizeof(Msg_sent));
-		if (!msg_sent_first){
-			printf("Error : cannot allocate memory for msg_sent_first");
-			exit(0);
+void init_ack() {
+	acks = calloc(acks_total_len, sizeof(Ack));
+	if (!acks) {
+		printf("Error : calloc failed in init_ack\n");
+		exit(0);
+	}
+	from_total_len = get_process_count()-1;
+	for (int i=0;i<acks_total_len;++i) {
+		create_empty_ack(i);
+	}
+}
+
+void create_empty_ack(int index) {
+	acks[index].from = (int*)malloc(from_total_len*sizeof(int));
+	if (!acks[index].from) {
+		printf("Error : calloc failed in create_empty_ack\n");
+		exit(0);
+	}
+	for (int j=0;j<from_total_len;++j) {
+		acks[index].from[j] = -1;
+	}
+}
+
+int get_acks_len(){
+	return acks_len;
+}
+
+int find_ack(char* msg, int src) {
+	if (msg != NULL && src > 0) {
+		int i = 0;
+		while (i < acks_len) {
+			if (acks[i].msg != NULL) {
+				if (strcmp(acks[i].msg, msg) == 0 && acks[i].src == src) {
+					return i;
+				}
+			}
+			++i;
 		}
-		msg_sent_last = msg_sent_first;
+	}
+	return -1;
+}
+
+void add_ack(char* msg, int src, int from) {
+	// First we try to find the corresponding [msg, src]
+	int index = find_ack(msg, src);
+	if (index == -1) {
+		// Not found, we fill a new Ack
+		if (acks_len >= acks_total_len) {
+			acks_total_len*=2;
+			acks = realloc(acks, acks_total_len*sizeof(Ack));
+			if (!acks) {
+				printf("Error : realloc failed in add_ack\n");
+				exit(0);
+			}
+			for (int i=acks_len;i<acks_total_len;++i) {
+				create_empty_ack(i);
+			}
+
+		}
+		acks[acks_len].src = src;
+		acks[acks_len].msg = msg;
+		acks[acks_len].from[0] = from;
+		++acks_len;
 	}
 	else {
-		msg_sent_last->next = malloc(sizeof(Msg_sent));
-		if (!msg_sent_last->next){
-			printf("Error : cannot allocate memory for msg_sent_first");
+		// An Ack already exists with this [msg, src], we add the process
+		bool not_added = true;
+		int i = 0;
+		while(not_added && i < from_total_len) {
+			if (acks[index].from[i] == -1) {
+				acks[index].from[i] = from;
+				not_added = false;
+			}
+			++i;
+		}
+		if (not_added) {
+			printf("Error : cannot add 'from' to Ack\n");
 			exit(0);
 		}
-		msg_sent_last = msg_sent_last->next;
 	}
-	msg_sent_last->msg = msg;
-	msg_sent_last->dst_id = dst_process_id; //get_sock_addr_from_process_id(dst_process_id);
-	msg_sent_last->t_start = get_cur_time();
-	msg_sent_last->next = NULL;
 }
 
-void remove_msg_sent(char* ack_msg, int process_id){
-	//print_first_n_msg_sent(5);
-	char ack_msg_cut[16];
-	memcpy(ack_msg_cut, ack_msg+2, strlen(ack_msg)-1);
-	//printf("Remove msg '%s' from process %d\n", ack_msg_cut, process_id);
-
-	struct Msg_sent* prev = NULL;
-	struct Msg_sent* cur = msg_sent_first;
-
-	bool not_found = true;
-	while(not_found && cur) {
-		if (strcmp(cur->msg, ack_msg_cut) == 0 && cur->dst_id == process_id){
-			not_found = false;
-			if (!cur->next) {
-				msg_sent_last = prev;
-			}
-			if (prev) {
-				prev->next = cur->next;
-			}
-			else {
-				msg_sent_first = cur->next;
-			}
-			prev = cur;
-			cur = cur->next;
-			free(prev);
-		}
-		else{
-			prev = cur;
-			cur = cur->next;
+bool acked_by_half(int index) {
+	int count = 0;
+	for(int i=0;i<from_total_len;++i) {
+		if (acks[index].from[i] != -1) {
+			++count;
 		}
 	}
-	//print_first_n_msg_sent(5);
+	printf("count %d/%d\n", count+1, get_process_count());
+	// +1 because this process has also the message
+	if(count+1 > get_process_count() / 2.0) {
+		return true;
+	}
+	return false;
 }
 
-bool ack_times_up(double t_start) {
-	return get_cur_time()-t_start > time_out;
-}
-
-double get_cur_time(){
-	struct timespec cur_time = {0,0};
-	clock_gettime(CLOCK_MONOTONIC, &cur_time);
-	return (cur_time.tv_sec + 1.0e-9*cur_time.tv_nsec);
-
-}
-
-// If the acks we are waiting for do not arrive after the 
-// specified timeout, we resend the corresponding packets, 
-// assuming the packets were lost in the network. 
-void resend_packets_if_needed() {
-	Msg_sent* prev_msg_sent = NULL;
-	Msg_sent* cur_msg_sent = msg_sent_first;
-	if (cur_msg_sent) {
-		while(cur_msg_sent && ack_times_up(cur_msg_sent->t_start)) {
-			//print_first_n_msg_sent(5);
-			printf("Resend packet '%s' to process %d\n", cur_msg_sent->msg, cur_msg_sent->dst_id);
-			perfect_links_send(cur_msg_sent->msg, cur_msg_sent->dst_id);
-			//print_first_n_msg_sent(5);
-			if (prev_msg_sent){
-				// If there is a message before the current message
-				prev_msg_sent->next = cur_msg_sent->next;
-				if (!cur_msg_sent->next) {
-					msg_sent_last = prev_msg_sent; 
-				}
-				cur_msg_sent = cur_msg_sent->next;
-			}
-			else {
-				// If this is the first message
-				msg_sent_first = cur_msg_sent->next;
-				prev_msg_sent = msg_sent_first;
-				if (msg_sent_first) {
-					// Si il y a au moins message
-					cur_msg_sent = msg_sent_first->next;
-				}
-				else {
-					// Si il ne reste aucun message dans la liste
-					cur_msg_sent = NULL;
-					msg_sent_last = NULL;
-				}
-			}
-			//print_first_n_msg_sent(5);
+void print_ack() {
+	for(int i=0;i<acks_len;++i) {
+		printf("[%s,%d,", acks[i].msg, acks[i].src);
+		for(int j=0;j<from_total_len;++j) {
+			printf("%d,", acks[i].from[j]);
 		}
-	}
-}
-
-void print_msg_sent(){
-	printf("First : %p\n", msg_sent_first);
-	Msg_sent* tmp = msg_sent_first;
-	while (tmp != NULL) {
-		printf("Msg : %s at %p\n", tmp->msg, tmp);
-		printf("  Process id : %d\n", tmp->dst_id);
-		printf("  Next : %p\n", tmp->next);
-		tmp = tmp->next;
-	}
-	printf("Last : %p\n", msg_sent_last);
-}
-
-void print_first_n_msg_sent(int n){
-	Msg_sent* tmp = msg_sent_first;
-	printf("%p", msg_sent_first);
-	for (int i=0;i<n;++i){
-		if (tmp) {
-			printf("{dst:%d, %s}", tmp->dst_id, tmp->msg);
-			tmp = tmp->next;
-		}
-	}
-	printf("%p", msg_sent_last);
+		printf("]");
+	} 
 	printf("\n");
 }
 
-void free_msg_sent(){
-	Msg_sent* tmp = msg_sent_first;
-	while (tmp != NULL) {
-		Msg_sent* tmp_next = tmp->next;
-		free(tmp->msg);
-		free(tmp);
-		tmp = tmp_next;
+void free_ack() {
+	for (int i=0;i<acks_len;++i) {
+		if(acks[i].msg!=NULL) {
+			free(acks[i].msg);
+		}
+		if(acks[i].from!=NULL) {
+			free(acks[i].from);
+		}
 	}
-	msg_sent_first = NULL;
-	msg_sent_last = NULL;
+	free(acks);
 }

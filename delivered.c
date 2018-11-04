@@ -4,9 +4,9 @@ static Delivered *delivered;
 static int delivered_total_len = 0;
 static int delivered_len = 0;
 
-void init_delivered(int total_broadcast) {
+void init_delivered() {
 	// TODO : increase size if needed (we are not sure every process broadcast the same amount)
-	delivered_total_len = total_broadcast*(get_process_count()-1);
+	delivered_total_len = 1000*(get_process_count()-1);
 	delivered = calloc(delivered_total_len, sizeof(Delivered));
 
 }

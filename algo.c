@@ -1,5 +1,17 @@
 #include "algo.h"
 
+// Initialize everything we need for the best effort broadcast
+void init_beb() {
+	init_delivered();
+}
+
+// Initialize everything we need for the uniform reliable
+// broadcast algorithm
+void init_urb() {
+	init_beb();
+	init_forward();
+	init_ack();
+}
 
 // Send a message to a given destination over perfect links
 // We have to ensure validity :
@@ -14,9 +26,15 @@
 // need to ensure that the packet we sent will reach the 
 // destination. 
 void perfect_links_send(char* msg, int dst_process_id){
-
+	// TODO : CHANGE
 	// First we send the message over UDP
-	send_udp_packet(msg, dst_process_id);
+	if (get_random_bool(67)) {
+		send_udp_packet(msg, dst_process_id);
+	}
+	else {
+		printf("LOST\n");
+	}
+	//send_udp_packet(msg, dst_process_id);
 	// Then we add it to the list
 	add_msg_sent(msg, dst_process_id);
 
@@ -61,7 +79,7 @@ void perfect_links_deliver_loss(char* msg,
 		char ack_msg[16];
 		sprintf(ack_msg, "a %s", msg);
 
-		if (get_random_bool(25)) {
+		if (get_random_bool(67)) {
 			printf("Send ack '%s' to process %d\n", ack_msg, src_id);
 			send_udp_packet(ack_msg, src_id);
 		}
@@ -103,3 +121,7 @@ void broadcast(int* seq, int process_id, int process_count) {
 	// Increment the sequence number
 	++(*seq);
 }
+
+
+
+

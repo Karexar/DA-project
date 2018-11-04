@@ -6,12 +6,14 @@
 #include "utils.h"
 #include "udp.h"
 #include "algo.h"
-#include "ack.h"
+#include "msg_sent.h"
 #include "process.h"
 #include "log.h"
 #include "delivered.h"
 #include "random.h"
 #include "timer.h"
+#include "forward.h"
+#include "ack.h"
 
 // udp
 #include <unistd.h> 
@@ -76,8 +78,8 @@ int main(int argc, char** argv) {
 	// and write it to disk only when the variable is full
 	init_logs(process_id);
 
-	// Initialize the delivered list
-	init_delivered(total_broadcast);
+	// Initialize everything we need concerning the distributed algorithms
+	init_urb();
 
 	// Initialize non blocking receiver
 	fd_set readfds;
@@ -174,7 +176,7 @@ int main(int argc, char** argv) {
 			char* msg = receive_udp_packet(&src_sock_ip);
 			printf("Received : '%s' from process %d\n", msg, 
 					get_id_from_port(ntohs(src_sock_ip.sin_port)));
-			perfect_links_deliver_loss(msg, &src_sock_ip);
+			perfect_links_deliver_loss(msg, &src_sock_ip); // TODO change
 			//perfect_links_deliver(msg, &src_sock_ip);
 			//print_msg_sent();
 		}
