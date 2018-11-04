@@ -1,9 +1,15 @@
 #include "udp.h"
 
 void send_udp_packet(const char* msg, int dst_process_id) {
-	const struct sockaddr * dst_sock_addr = (const struct sockaddr *)get_sock_addr_from_process_id(dst_process_id);
-	sendto(get_sock_fd(), msg, strlen(msg), MSG_CONFIRM, 
-		dst_sock_addr, sizeof(*dst_sock_addr)); 
+	if (get_random_bool(75)) {
+		const struct sockaddr * dst_sock_addr = 
+			(const struct sockaddr *)get_sock_addr_from_process_id(dst_process_id);
+		sendto(get_sock_fd(), msg, strlen(msg), MSG_CONFIRM, 
+				dst_sock_addr, sizeof(*dst_sock_addr)); 
+	}
+	else {
+		printf("LOST\n");
+	}
 }
 
 // NEED TO FREE

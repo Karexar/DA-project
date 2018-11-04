@@ -60,6 +60,18 @@ int main(int argc, char** argv) {
 
 	printf("Initializing process %d.\n", process_id);
 
+	char tmp_type = NULL;
+	int tmp_src = -1;
+	char* tmp_msg = (char*)malloc(50);
+	sprintf(tmp_msg, "s\n23\nSalut");
+
+	parse_message(tmp_msg, &tmp_type, &tmp_src);
+	printf("type : %c\n", tmp_type); 
+	printf("src : %d\n", tmp_src);
+	printf("payload : %s\n", tmp_msg);
+
+	free(tmp_msg);
+
 	// Set signal handlers
 	signal(SIGUSR1, start);
 	signal(SIGTERM, stop);
@@ -119,7 +131,8 @@ int main(int argc, char** argv) {
 	
 	int seq = 0;
 	for (int i = 0 ; i < total_broadcast ; ++i) {
-		broadcast(&seq, process_id, get_process_count());
+		printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
+		broadcast(&seq, process_id, process_id, get_process_count());
 	}
 
 
@@ -174,11 +187,13 @@ int main(int argc, char** argv) {
 		if (rv == 1) {
 			struct sockaddr_in src_sock_ip;
 			char* msg = receive_udp_packet(&src_sock_ip);
-			printf("Received : '%s' from process %d\n", msg, 
+			char msg_type = NULL;
+			int msg_src = -1;
+			parse_message(msg, &msg_type, &msg_src);
+
+			printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
 					get_id_from_port(ntohs(src_sock_ip.sin_port)));
-			perfect_links_deliver_loss(msg, &src_sock_ip); // TODO change
-			//perfect_links_deliver(msg, &src_sock_ip);
-			//print_msg_sent();
+			perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
 		}
 
 		// Todo : resend ack if needed by checking msg_sent

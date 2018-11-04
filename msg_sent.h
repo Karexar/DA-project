@@ -17,14 +17,15 @@
 #include "algo.h"
 
 typedef struct Msg_sent{
-	char* msg;
-	int dst_id;
+	char* payload;
+	int msg_src;
+	int msg_dst;
 	double t_start;
 	struct Msg_sent* next;
 } Msg_sent;
 
-void add_msg_sent(char* msg, int dst_process_id);
-void remove_msg_sent(char* msg, int dst_process_id);
+void add_msg_sent(char* msg, int msg_src, int dst_process_id);
+void remove_msg_sent(char* msg, int msg_dst, int msg_src);
 bool msg_sent_times_up(double t_start);
 double get_cur_time();
 void resend_packets_if_needed();

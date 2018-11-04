@@ -16,16 +16,14 @@
 #include "udp.h"
 #include "msg_sent.h"
 #include "delivered.h"
-#include "random.h"
 #include "forward.h"
 #include "ack.h"
 
 void init_beb();
 void init_urb();
-void perfect_links_send(char* msg, int dst_process_id);
-void perfect_links_deliver(char* msg, struct sockaddr_in * src_sock_addr);
-void perfect_links_deliver_loss(char* msg, 
-						   struct sockaddr_in * src_sock_addr); // for debug only
-void broadcast(int* seq, int process_id, int process_count);
+void perfect_links_send(char* payload, int msg_src, int dst_process_id);
+void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
+						   struct sockaddr_in * src_sock_addr);
+void broadcast(int* seq, int src_id, int process_id, int process_count);
 
 #endif

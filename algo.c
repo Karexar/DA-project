@@ -25,18 +25,18 @@ void init_urb() {
 // if we deliver or send others packet in between, we only 
 // need to ensure that the packet we sent will reach the 
 // destination. 
-void perfect_links_send(char* msg, int dst_process_id){
+void perfect_links_send(char* payload, int msg_src, int dst_process_id){
 	// TODO : CHANGE
-	// First we send the message over UDP
-	if (get_random_bool(67)) {
-		send_udp_packet(msg, dst_process_id);
-	}
-	else {
-		printf("LOST\n");
-	}
-	//send_udp_packet(msg, dst_process_id);
+	// Message has the form
+	// Type : s for simple packet, a for ack packet
+	// Source process : the very origin of the message
+	// Payload : the sequence number
+	char msg[strlen(payload)+16];
+	sprintf(msg, "s\n%d\n%s", msg_src, payload);
+	// First we send the packet over UDP
+	send_udp_packet(msg, dst_process_id);
 	// Then we add it to the list
-	add_msg_sent(msg, dst_process_id);
+	add_msg_sent(payload, msg_src, dst_process_id);
 
 
 	/*struct timespec tstart={0,0}, tend={0,0};
@@ -46,18 +46,19 @@ void perfect_links_send(char* msg, int dst_process_id){
 	printf("%.5f seconds\n", ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));*/
 }
 
-void perfect_links_deliver(char* msg, 
+void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr){
-	int src_id = get_id_from_sock_addr(src_sock_addr);
+	int from_id = get_id_from_sock_addr(src_sock_addr);
 	// If this is not an ack, we send an ack back to the source
-	if (msg[0] != 'a') {
-		char ack_msg[16];
-		sprintf(ack_msg, "a %s", msg);
-		send_udp_packet(ack_msg, src_id);
+	if (msg_type == 's') {
+		printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+		char ack_msg[strlen(msg)+16];
+		sprintf(ack_msg, "a\n%d\n%s", msg_src, msg);
+		send_udp_packet(ack_msg, from_id);
 
 		// If the message is not yet delivered, we deliver it
-		if(not_delivered_yet(src_id, msg)) {
-			add_delivered(src_id, msg);
+		if(not_delivered_yet(from_id, msg)) {
+			add_delivered(from_id, msg);
 		}
 		else {
 			free(msg);
@@ -65,56 +66,27 @@ void perfect_links_deliver(char* msg,
 		}
 	}
 	// If this is an ack, we remove the waiting entry
-	else {
-		remove_msg_sent(msg, src_id);
+	else if (msg_type == 'a') {
+		remove_msg_sent(msg, from_id, msg_src);
 		free(msg);
+	}
+	else {
+		printf("Error : unknown message type\n");
+		exit(0);
 	}
 }
 
-void perfect_links_deliver_loss(char* msg, 
-						   struct sockaddr_in * src_sock_addr){
-	int src_id = get_id_from_sock_addr(src_sock_addr);
-	// If this is not an ack, we send an ack back to the source
-	if (msg[0] != 'a') {
-		char ack_msg[16];
-		sprintf(ack_msg, "a %s", msg);
-
-		if (get_random_bool(67)) {
-			printf("Send ack '%s' to process %d\n", ack_msg, src_id);
-			send_udp_packet(ack_msg, src_id);
-		}
-		else {
-			printf("Send ack '%s' to process %d LOST\n", ack_msg, src_id);
-		}
-
-		// If the message is not yet delivered, we deliver it
-		if(not_delivered_yet(src_id, msg)) {
-			add_delivered(src_id, msg);
-		}
-		else {
-			free(msg);
-			msg = NULL;
-		}
-	}
-	// If this is an ack, we remove the waiting entry
-	else {
-		remove_msg_sent(msg, src_id);
-		free(msg);
-	}
-}
-
-void broadcast(int* seq, int process_id, int process_count) {
+void broadcast(int* seq, int msg_src, int process_id, int process_count) {
 	// Update logs
 	add_logs(*seq, BROADCAST, process_id);
 	// Broadcast the message by iterating over all other processes
 	for (int i=0;i<process_count;++i) {
 		if (i != process_id-1) {
 			// Convert the sequence number into string
-			char* msg = (char*)malloc(16);
-			sprintf(msg, "%d", *seq);
-			int dst_process_id = i+1;
-			perfect_links_send(msg, dst_process_id);
-			//send_udp_packet(msg, dst_process_id);
+			char* payload = (char*)malloc(16);
+			sprintf(payload, "%d", *seq);
+			int msg_dst = i+1;
+			perfect_links_send(payload, msg_src, msg_dst);
 	    }
 	}
 	

@@ -42,3 +42,33 @@ char* get_word(FILE* f) {
 	s[j] = '\0';
 	return s;
 }
+
+void parse_message(char* msg, char* msg_type, int* msg_src) {
+	int i = 0;
+	int len_msg = strlen(msg);
+	*msg_type = msg[0];
+	i+=2;
+
+	int len_src = 0;
+	char c = msg[i];
+	while (c != '\n' && i < len_msg) {
+		++i;
+		++len_src;
+		c = msg[i];
+	}
+
+	char* tmp_msg_src = (char*)malloc(len_src+1);
+	sprintf(tmp_msg_src, "%.*s", len_src, msg+(i-len_src));
+	*msg_src = atoi(tmp_msg_src);
+	free(tmp_msg_src);
+
+	int len_payload = 0;
+	++i;
+	c = msg[i];
+	while (i < len_msg) {
+		++i;
+		++len_payload;
+		c = msg[i];
+	}
+	sprintf(msg, "%.*s", len_payload, msg+(i-len_payload));
+}

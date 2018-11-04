@@ -15,6 +15,7 @@
 #include "process.h"
 #include "log.h"
 #include "socket.h"
+#include "random.h"
 
 void send_udp_packet(const char* msg, int dst_process_id);
 char* receive_udp_packet(struct sockaddr_in * src_sock_addr);
