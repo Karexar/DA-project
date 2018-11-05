@@ -70,24 +70,52 @@ void add_ack(char* msg, int src, int from) {
 		++acks_len;
 	}
 	else {
-		// An Ack already exists with this [msg, src], we add the process
-		bool not_added = true;
-		int i = 0;
-		while(not_added && i < from_total_len) {
-			if (acks[index].from[i] == -1) {
-				acks[index].from[i] = from;
-				not_added = false;
+		// An Ack already exists with this [msg, src]
+		// Check if the process is already in the ack for this message
+		bool process_not_in_ack_yet = true;
+		for (int i=0;i<from_total_len;++i) {
+			if (acks[index].from[i] == from) {
+				process_not_in_ack_yet = false;
 			}
-			++i;
 		}
-		if (not_added) {
-			printf("Error : cannot add 'from' to Ack\n");
-			exit(0);
+
+		if (process_not_in_ack_yet) {
+			bool not_added = true;
+			int i = 0;
+			while(not_added && i < from_total_len) {
+				if (acks[index].from[i] == -1) {
+					acks[index].from[i] = from;
+					not_added = false;
+				}
+				++i;
+			}
+			if (not_added) {
+				printf("Error : cannot add 'from' to Ack\n");
+				exit(0);
+			}
 		}
 	}
 }
 
-bool acked_by_half(int index) {
+bool acked_by_half(char* msg, int src) {
+	int index = find_ack(msg, src);
+	if (index >= 0) {
+		int count = 0;
+		for(int i=0;i<from_total_len;++i) {
+			if (acks[index].from[i] != -1) {
+				++count;
+			}
+		}
+		//printf("count %d/%d\n", count+1, get_process_count());
+		// +1 because this process has also the message
+		if(count+1 > get_process_count() / 2.0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/*bool acked_by_half(int index) {
 	int count = 0;
 	for(int i=0;i<from_total_len;++i) {
 		if (acks[index].from[i] != -1) {
@@ -100,7 +128,7 @@ bool acked_by_half(int index) {
 		return true;
 	}
 	return false;
-}
+}*/
 
 void print_ack() {
 	for(int i=0;i<acks_len;++i) {

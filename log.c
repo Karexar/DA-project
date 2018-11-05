@@ -3,10 +3,10 @@
 static char logs[LOG_SIZE];
 
 // Initialize the log file as an empty file
-void init_logs(int process_id){
+void init_logs(){
 	logs[0] = '\0';
 	char log_file_name[20];
-	sprintf(log_file_name, "da_proc_%d.out", process_id);
+	sprintf(log_file_name, "da_proc_%d.out", get_process_id());
 	FILE *log_file = fopen(log_file_name, "w");
 	if(log_file == NULL) {
 		printf("Cannot open '%s'\n", log_file_name);
@@ -20,16 +20,16 @@ void init_logs(int process_id){
 
 // Add a log the logs variable
 // If the logs variable is full, write the content on disk
-void add_logs(int seq, Log_type log_type, int process_id){
+void add_logs(char* payload, Log_type log_type){
 	if (log_type == BROADCAST) {
 		char log[14];
-		sprintf(log, "b %d\n", seq);
+		sprintf(log, "b %s\n", payload);
 		if (LOG_SIZE - strlen(logs) > 13) {
 			strcat(logs, log);
 		}
 		else {
 			// The logs variable is full, we write the content on disk
-			write_logs(process_id);
+			write_logs();
 			// Update the logs variable with the current log
 			strcpy(logs, log);
 		}
@@ -43,10 +43,10 @@ void add_logs(int seq, Log_type log_type, int process_id){
 	}
 }
 
-void write_logs(int process_id) {
+void write_logs() {
 	if (strlen(logs) > 0) {
 		char log_file_name[20];
-		sprintf(log_file_name, "da_proc_%d.out", process_id);
+		sprintf(log_file_name, "da_proc_%d.out", get_process_id());
 		FILE *log_file = fopen(log_file_name, "a");
 		if(log_file == NULL) {
 			printf("Cannot open '%s'\n", log_file_name);

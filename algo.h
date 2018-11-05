@@ -18,12 +18,15 @@
 #include "delivered.h"
 #include "forward.h"
 #include "ack.h"
+#include "process.h"
 
 void init_beb();
 void init_urb();
 void perfect_links_send(char* payload, int msg_src, int dst_process_id);
 void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr);
-void broadcast(int* seq, int src_id, int process_id, int process_count);
+void broadcast(char* payload, int src_id);
+void urb_deliver(char* msg, char msg_type, int msg_src, 
+						   struct sockaddr_in * src_sock_addr);
 
 #endif

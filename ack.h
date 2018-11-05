@@ -20,7 +20,7 @@ void create_empty_ack(int index);
 int get_acks_len();
 int find_ack(char* msg, int src);
 void add_ack(char* msg, int src, int from);
-bool acked_by_half(int index);
+bool acked_by_half(char* msg, int src);
 void free_ack();
 void print_ack();
 

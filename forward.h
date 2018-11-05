@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "utils.h"
+#include "ack.h"
+#include "delivered.h"
 
 
 typedef struct Forward{
@@ -11,7 +14,9 @@ typedef struct Forward{
 } Forward;
 
 void init_forward();
+bool not_forwarded_yet(char* msg, int src);
 void add_forward(char* msg, int src);
+void check_forward_to_deliver();
 void free_forward();
 
 #endif

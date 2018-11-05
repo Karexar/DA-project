@@ -2,6 +2,12 @@
 
 static Process** p;
 static int process_count;
+static int process_id;
+
+void init_process(char* filename, int id) {
+	process_id = id;
+	create_process_list(filename);
+}
 
 // Create the list of processes containing id, ip, and port
 // Return the list of processes as a double pointer
@@ -32,6 +38,10 @@ void create_process_list(char* filename) {
 		}
 		fclose(f);
 	}
+}
+
+int get_process_id() {
+	return process_id;
 }
 
 char* get_ip_from_id(int process_id) {

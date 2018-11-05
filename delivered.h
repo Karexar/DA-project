@@ -12,8 +12,8 @@ typedef struct Delivered{
 } Delivered;
 
 void init_delivered();
-void add_delivered(int port, char* msg);
-bool not_delivered_yet(int src_id, char* msg);
+void add_delivered(char* msg, int src_process_id);
+bool not_delivered_yet(char* msg, int src_id);
 void print_delivered();
 void free_delivered();
 

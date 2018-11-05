@@ -4,13 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "process.h"
 
 #define	LOG_SIZE	25
 
 typedef enum{BROADCAST, DELIVER} Log_type;
 
-void init_logs(int process_id);
-void add_logs(int seq, Log_type log_type, int process_id);
-void write_logs(int process_id);
+void init_logs();
+void add_logs(char* payload, Log_type log_type);
+void write_logs();
 
 #endif

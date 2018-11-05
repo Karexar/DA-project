@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
 	// Read the membership file to extract 
 	// the id, ip and port for each process
-	create_process_list(filename);
+	init_process(filename, process_id);
 
 	// Initialize sockets
 	init_socket(process_id);
@@ -132,7 +132,11 @@ int main(int argc, char** argv) {
 	int seq = 0;
 	for (int i = 0 ; i < total_broadcast ; ++i) {
 		printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
-		broadcast(&seq, process_id, process_id, get_process_count());
+		// Convert the sequence number into string
+		char* payload = (char*)malloc(16);
+		sprintf(payload, "%d", seq);
+		++seq;
+		broadcast(payload, process_id);
 	}
 
 
@@ -193,11 +197,15 @@ int main(int argc, char** argv) {
 
 			printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
 					get_id_from_port(ntohs(src_sock_ip.sin_port)));
-			perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
+			//perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
+			urb_deliver(msg, msg_type, msg_src, &src_sock_ip);
 		}
 
-		// Todo : resend ack if needed by checking msg_sent
+		// resend packet after a timeout in msg_sent if no ack received 
 		resend_packets_if_needed();
+
+		// to ensure urb
+		check_forward_to_deliver();
 
 		nanosleep(&sleep_time, NULL);
 

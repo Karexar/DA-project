@@ -11,13 +11,13 @@ void init_delivered() {
 
 }
 
-void add_delivered(int src_process_id, char* msg) {
+void add_delivered(char* msg, int src_process_id) {
 	delivered[delivered_len].src_id = src_process_id;
 	delivered[delivered_len].msg = msg;
 	++delivered_len;
 }
 
-bool not_delivered_yet(int src_id, char* msg) {
+bool not_delivered_yet(char* msg, int src_id) {
 	for (int i=0;i<delivered_len;++i) {
 		if (delivered[i].src_id == src_id && strcmp(delivered[i].msg, msg) == 0) {
 			return false;
