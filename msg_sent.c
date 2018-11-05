@@ -48,6 +48,7 @@ void remove_msg_sent(char* ack_payload, int msg_dst, int msg_src){
 			prev = cur;
 			cur = cur->next;
 			free(prev);
+			prev = NULL;
 		}
 		else{
 			prev = cur;
@@ -81,7 +82,9 @@ void resend_packets_if_needed() {
 		while(cur_msg_sent && msg_sent_times_up(cur_msg_sent->t_start)) {
 			char* new_msg = (char*)malloc(strlen(cur_msg_sent->payload)+16);
 			sprintf(new_msg, "s\n%d\n%s", cur_msg_sent->msg_src, cur_msg_sent->payload);
-			printf("Resend packet 's %d %s' to process %d\n", cur_msg_sent->msg_src, cur_msg_sent->payload, cur_msg_sent->msg_dst);
+			if (DEBUG_PRINT) {
+				printf("Resend packet 's %d %s' to process %d\n", cur_msg_sent->msg_src, cur_msg_sent->payload, cur_msg_sent->msg_dst);
+			}
 			perfect_links_send(cur_msg_sent->payload, cur_msg_sent->msg_src, cur_msg_sent->msg_dst);
 			if (prev_msg_sent){
 				// If there is a message before the current message
@@ -142,6 +145,7 @@ void free_msg_sent(){
 		Msg_sent* tmp_next = tmp->next;
 		if (tmp->payload) {
 			free(tmp->payload);
+			tmp->payload = NULL;
 		}
 		free(tmp);
 		tmp = tmp_next;

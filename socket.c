@@ -48,4 +48,5 @@ int get_sock_fd() {
 
 void free_socket() {
 	free(sock_ips);
+    sock_ips = NULL;
 }

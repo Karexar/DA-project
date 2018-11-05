@@ -61,6 +61,7 @@ void parse_message(char* msg, char* msg_type, int* msg_src) {
 	sprintf(tmp_msg_src, "%.*s", len_src, msg+(i-len_src));
 	*msg_src = atoi(tmp_msg_src);
 	free(tmp_msg_src);
+	tmp_msg_src = NULL;
 
 	int len_payload = 0;
 	++i;

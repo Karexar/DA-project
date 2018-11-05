@@ -8,7 +8,9 @@ void send_udp_packet(const char* msg, int dst_process_id) {
 				dst_sock_addr, sizeof(*dst_sock_addr)); 
 	}
 	else {
-		printf("LOST\n");
+		if(DEBUG_PRINT){
+			printf("LOST\n");
+		}
 	}
 }
 

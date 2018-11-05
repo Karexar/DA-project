@@ -19,6 +19,7 @@
 #include "forward.h"
 #include "ack.h"
 #include "process.h"
+#include "setting.h"
 
 void init_beb();
 void init_urb();

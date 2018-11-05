@@ -10,13 +10,13 @@
 
 typedef struct Ack{
 		int src;
-		char *msg;
+		char* msg;
 		int* from;
 } Ack;
 
 
 void init_ack();
-void create_empty_ack(int index);
+void create_empty_from_list(int index);
 int get_acks_len();
 int find_ack(char* msg, int src);
 void add_ack(char* msg, int src, int from);

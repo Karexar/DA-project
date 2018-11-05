@@ -20,11 +20,11 @@ void init_logs(){
 
 // Add a log the logs variable
 // If the logs variable is full, write the content on disk
-void add_logs(char* payload, Log_type log_type){
+void add_logs(int src, char* payload, Log_type log_type){
 	if (log_type == BROADCAST) {
-		char log[14];
+		char log[16];
 		sprintf(log, "b %s\n", payload);
-		if (LOG_SIZE - strlen(logs) > 13) {
+		if (LOG_SIZE - strlen(logs) > 16) {
 			strcat(logs, log);
 		}
 		else {
@@ -35,7 +35,17 @@ void add_logs(char* payload, Log_type log_type){
 		}
 	}
 	else if (log_type == DELIVER) {
-		// TODO
+		char log[32];
+		sprintf(log, "d %d %s\n", src, payload);
+		if (LOG_SIZE - strlen(logs) > 32) {
+			strcat(logs, log);
+		}
+		else {
+			// The logs variable is full, we write the content on disk
+			write_logs();
+			// Update the logs variable with the current log
+			strcpy(logs, log);
+		}
 	}
 	else {
 		printf("Error : unknown Log_type");

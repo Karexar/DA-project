@@ -43,20 +43,33 @@ void add_forward(char* msg, int src){
 void check_forward_to_deliver() {
 	for (int i=0;i<forwards_len;++i) {
 		if (forwards[i].msg != NULL) {
-			if (acked_by_half(forwards[i].msg, forwards[i].src) && 
-				not_delivered_yet(forwards[i].msg, forwards[i].src)) {
-				// The [src, msg] is present in a majority of process
-				// Since a majority of process is correct, the [src, msg]
-				// is present at least in one correct process. 
-				// By reliable broadcast, if a correct process deliver a message m
-				// then every correct process deliver m
-				// Since the message is present in this correct process, it means 
-				// the process has broadcast it, and by beb broadcast, every message
-				// sent by pi is eventually received by pj, thus all correct message 
-				// will receive it. 
-				add_delivered(forwards[i].msg, forwards[i].src);
+			int seq = atoi(forwards[i].msg);
+			if (seq == get_last_seq_delivered(forwards[i].src)+1) {
+				// If it respects FIFO order
+				if (acked_by_half(forwards[i].msg, forwards[i].src) && 
+					not_delivered_yet(forwards[i].msg, forwards[i].src)) {
+					// The [src, msg] is present in a majority of process
+					// Since a majority of process is correct, the [src, msg]
+					// is present at least in one correct process. 
+					// By reliable broadcast, if a correct process deliver a message m
+					// then every correct process deliver m
+					// Since the message is present in this correct process, it means 
+					// the process has broadcast it, and by beb broadcast, every message
+					// sent by pi is eventually received by pj, thus all correct message 
+					// will receive it. 
+					if (DEBUG_PRINT) {
+						printf("Delivering [%d, %s]\n", forwards[i].src, forwards[i].msg);
+					}
+					add_delivered(forwards[i].msg, forwards[i].src);
+				}
 			}
 		}
+	}
+}
+
+void print_forward() {
+	for (int i=0;i<forwards_len;++i) {
+		printf("[%d,%s]\n", forwards[i].src, forwards[i].msg);
 	}
 }
 

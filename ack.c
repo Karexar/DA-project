@@ -13,11 +13,13 @@ void init_ack() {
 	}
 	from_total_len = get_process_count()-1;
 	for (int i=0;i<acks_total_len;++i) {
-		create_empty_ack(i);
+		acks[i].src = -1;
+		acks[i].msg = NULL;
+		create_empty_from_list(i);
 	}
 }
 
-void create_empty_ack(int index) {
+void create_empty_from_list(int index) {
 	acks[index].from = (int*)malloc(from_total_len*sizeof(int));
 	if (!acks[index].from) {
 		printf("Error : calloc failed in create_empty_ack\n");
@@ -60,12 +62,17 @@ void add_ack(char* msg, int src, int from) {
 				exit(0);
 			}
 			for (int i=acks_len;i<acks_total_len;++i) {
-				create_empty_ack(i);
+				create_empty_from_list(i);
 			}
 
 		}
 		acks[acks_len].src = src;
-		acks[acks_len].msg = msg;
+		acks[acks_len].msg = (char*)malloc(strlen(msg)+1);
+		if (!acks[acks_len].msg) {
+			printf("Error : malloc failed in add_ack\n");
+			exit(0);
+		}
+		strcpy(acks[acks_len].msg, msg);
 		acks[acks_len].from[0] = from;
 		++acks_len;
 	}
@@ -132,11 +139,11 @@ bool acked_by_half(char* msg, int src) {
 
 void print_ack() {
 	for(int i=0;i<acks_len;++i) {
-		printf("[%s,%d,", acks[i].msg, acks[i].src);
+		printf("[%d,%s,[", acks[i].src, acks[i].msg);
 		for(int j=0;j<from_total_len;++j) {
 			printf("%d,", acks[i].from[j]);
 		}
-		printf("]");
+		printf("]]");
 	} 
 	printf("\n");
 }
@@ -145,9 +152,11 @@ void free_ack() {
 	for (int i=0;i<acks_len;++i) {
 		if(acks[i].msg!=NULL) {
 			free(acks[i].msg);
+			acks[i].msg = NULL;
 		}
 		if(acks[i].from!=NULL) {
 			free(acks[i].from);
+			acks[i].from = NULL;
 		}
 	}
 	free(acks);

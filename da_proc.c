@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "forward.h"
 #include "ack.h"
+#include "setting.h"
 
 // udp
 #include <unistd.h> 
@@ -59,18 +60,6 @@ int main(int argc, char** argv) {
 	int total_broadcast = atoi(get_main_arg(argc, argv, 3, INTEGER));
 
 	printf("Initializing process %d.\n", process_id);
-
-	char tmp_type = NULL;
-	int tmp_src = -1;
-	char* tmp_msg = (char*)malloc(50);
-	sprintf(tmp_msg, "s\n23\nSalut");
-
-	parse_message(tmp_msg, &tmp_type, &tmp_src);
-	printf("type : %c\n", tmp_type); 
-	printf("src : %d\n", tmp_src);
-	printf("payload : %s\n", tmp_msg);
-
-	free(tmp_msg);
 
 	// Set signal handlers
 	signal(SIGUSR1, start);
@@ -131,7 +120,9 @@ int main(int argc, char** argv) {
 	
 	int seq = 0;
 	for (int i = 0 ; i < total_broadcast ; ++i) {
-		printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
+		if (DEBUG_PRINT) {
+			printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
+		}
 		// Convert the sequence number into string
 		char* payload = (char*)malloc(16);
 		sprintf(payload, "%d", seq);
@@ -182,9 +173,17 @@ int main(int argc, char** argv) {
 		sleep_time.tv_sec = 0;
 		sleep_time.tv_nsec = 1000;
 
-		if (times_up() && !printed) {
-			print_msg_sent();
-			printed = true;
+		if (DEBUG_PRINT) {
+			if (times_up() && !printed) {
+				print_msg_sent();
+				printf("Ack\n");
+				print_ack();
+				printf("Forward\n");
+				print_forward();
+				printf("Delivered\n");
+				print_delivered();
+				printed = true;
+			}
 		}
 
 		int rv = select(get_sock_fd()+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
@@ -195,8 +194,10 @@ int main(int argc, char** argv) {
 			int msg_src = -1;
 			parse_message(msg, &msg_type, &msg_src);
 
-			printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
+			if (DEBUG_PRINT){
+				printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
 					get_id_from_port(ntohs(src_sock_ip.sin_port)));
+			}
 			//perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
 			urb_deliver(msg, msg_type, msg_src, &src_sock_ip);
 		}

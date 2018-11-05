@@ -50,7 +50,9 @@ void perfect_links_deliver(char* msg, char msg_type, int msg_src,
 	int from_id = get_id_from_sock_addr(src_sock_addr);
 	// If this is not an ack, we send an ack back to the source
 	if (msg_type == 's') {
-		printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+		if (DEBUG_PRINT) {
+			printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+		}
 		char ack_msg[strlen(msg)+16];
 		sprintf(ack_msg, "a\n%d\n%s", msg_src, msg);
 		send_udp_packet(ack_msg, from_id);
@@ -68,6 +70,7 @@ void perfect_links_deliver(char* msg, char msg_type, int msg_src,
 	else if (msg_type == 'a') {
 		remove_msg_sent(msg, from_id, msg_src);
 		free(msg);
+		msg = NULL;
 	}
 	else {
 		printf("Error : unknown message type\n");
@@ -77,7 +80,7 @@ void perfect_links_deliver(char* msg, char msg_type, int msg_src,
 
 void broadcast(char* payload, int msg_src) {
 	// Update logs
-	add_logs(payload, BROADCAST);
+	add_logs(msg_src, payload, BROADCAST);
 	// Broadcast the message by iterating over all other processes
 	for (int i=0;i<get_process_count();++i) {
 		if (i != get_process_id()-1) {
@@ -93,7 +96,9 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 	int from_id = get_id_from_sock_addr(src_sock_addr);
 	// If this is not an ack, we send an ack back to the source
 	if (msg_type == 's') {
-		printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+		if (DEBUG_PRINT) {
+			printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+		}
 		char ack_msg[strlen(msg)+16];
 		sprintf(ack_msg, "a\n%d\n%s", msg_src, msg);
 		send_udp_packet(ack_msg, from_id);
@@ -102,11 +107,15 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 		// because if it sends it, it means he has this message. 
 		add_ack(msg, msg_src, from_id);
 
-		// Then we check if the message is in the forward table
-		if (not_forwarded_yet(msg, msg_src)) {
+		// Then we check if the message is not already in the forward table
+		// and if the source of the message is not this process (self)
+		if (not_forwarded_yet(msg, msg_src) && msg_src != get_process_id()) {
 			// If it's not forwarded, we add the message to the forward
 			// list and broadcast the message to every processes
 			add_forward(msg, msg_src);
+			if (DEBUG_PRINT) {
+				printf("Broadcast [%d, %s]\n", msg_src, msg);
+			}
 			broadcast(msg, msg_src);
 		}
 		else {
@@ -120,6 +129,7 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 	else if (msg_type == 'a') {
 		remove_msg_sent(msg, from_id, msg_src);
 		free(msg);
+		msg = NULL;
 	}
 	else {
 		printf("Error : unknown message type\n");
