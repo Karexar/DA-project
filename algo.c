@@ -1,8 +1,12 @@
 #include "algo.h"
 
+static fd_set readfds;
+
 // Initialize everything we need for the best effort broadcast
 void init_beb() {
 	init_delivered();
+	// Initialize non blocking receiver
+	fcntl(get_sock_fd(), F_SETFL, O_NONBLOCK);
 }
 
 // Initialize everything we need for the uniform reliable
@@ -78,9 +82,11 @@ void perfect_links_deliver(char* msg, char msg_type, int msg_src,
 	}
 }
 
-void broadcast(char* payload, int msg_src) {
+void broadcast(char* payload, int msg_src, bool log_it) {
 	// Update logs
-	add_logs(msg_src, payload, BROADCAST);
+	if (log_it) {
+		add_logs(msg_src, payload, BROADCAST);
+	}
 	// Broadcast the message by iterating over all other processes
 	for (int i=0;i<get_process_count();++i) {
 		if (i != get_process_id()-1) {
@@ -116,7 +122,7 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 			if (DEBUG_PRINT) {
 				printf("Broadcast [%d, %s]\n", msg_src, msg);
 			}
-			broadcast(msg, msg_src);
+			broadcast(msg, msg_src, false);
 		}
 		else {
 			// The message is already in the forward list
@@ -137,3 +143,33 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 	}
 }
 
+void FIFO_listen() {
+	FD_ZERO(&readfds);
+	FD_SET(get_sock_fd(), &readfds);
+
+	struct timespec sleep_time;
+	sleep_time.tv_sec = 0;
+	sleep_time.tv_nsec = 1000;
+
+	int rv = select(get_sock_fd()+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
+	if (rv == 1) {
+		struct sockaddr_in src_sock_ip;
+		char* msg = receive_udp_packet(&src_sock_ip);
+		char msg_type = NULL;
+		int msg_src = -1;
+		parse_message(msg, &msg_type, &msg_src);
+
+		if (DEBUG_PRINT){
+			printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
+				get_id_from_port(ntohs(src_sock_ip.sin_port)));
+		}
+		//perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
+		urb_deliver(msg, msg_type, msg_src, &src_sock_ip);
+	}
+
+	// resend packet after a timeout in msg_sent if no ack received 
+	resend_packets_if_needed();
+
+	// to ensure urb
+	check_forward_to_deliver();
+}

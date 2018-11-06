@@ -16,6 +16,7 @@
 #include "socket.h"
 #include "algo.h"
 #include "setting.h"
+#include "process.h"
 
 typedef struct Msg_sent{
 	char* payload;

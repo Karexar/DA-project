@@ -24,9 +24,6 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h>
 
-// non blocking socket
-#include <sys/select.h> 
-#include <fcntl.h>
 
 static int wait_for_start = 1;
 
@@ -45,7 +42,7 @@ static void stop(int signum) {
 	printf("Immediately stopping network packet processing.\n");
 
 	//write/flush output file if necessary
-	printf("Writing output.\n");
+	printf("Writing output for process %d.\n", process_id);
 	write_logs(process_id);
 
 	//exit directly from signal handler
@@ -62,7 +59,7 @@ int main(int argc, char** argv) {
 	printf("Initializing process %d.\n", process_id);
 
 	// Set signal handlers
-	signal(SIGUSR1, start);
+	signal(SIGUSR2, start);
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
@@ -82,43 +79,19 @@ int main(int argc, char** argv) {
 	// Initialize everything we need concerning the distributed algorithms
 	init_urb();
 
-	// Initialize non blocking receiver
-	fd_set readfds;
-	fcntl(get_sock_fd(), F_SETFL, O_NONBLOCK);
-
 	// Initialize random number generator (debug only)
 	init_random();
-	/*
+	
 	// Wait until start signal
 	// Start listening for incoming UDP packets
 	while(wait_for_start) {
-		FD_ZERO(&readfds);
-		FD_SET(sockfd, &readfds);
-
-		struct timespec sleep_time;
-		sleep_time.tv_sec = 0;
-		sleep_time.tv_nsec = 1000;
-
-		int rv = select(sockfd+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
-		if (rv == 1) {
-			char* msg = receive_udp_packet(sockfd, &src_sock_ip);
-			printf("Received : '%s' from ip %s and port %d\n", msg, 
-					inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
-			free(msg);
-		}
-		// TODO : shall we do something for incoming packet before start signal ? 
-		//nanosleep(&sleep_time, NULL);
-	}*/
-
-	//perfect_links_send("salut", 2);
-	//print_msg_sent();
-
-	sleep(1);
+		FIFO_listen();
+	}
 
 	//broadcast messages
 	printf("Broadcasting %d messages.\n", total_broadcast);
 	
-	int seq = 0;
+	int seq = 1;
 	for (int i = 0 ; i < total_broadcast ; ++i) {
 		if (DEBUG_PRINT) {
 			printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
@@ -127,51 +100,15 @@ int main(int argc, char** argv) {
 		char* payload = (char*)malloc(16);
 		sprintf(payload, "%d", seq);
 		++seq;
-		broadcast(payload, process_id);
+		broadcast(payload, process_id, true);
 	}
 
 
-
-
-/*
-	struct sockaddr_in src_sock_ip;
-	char* msg = receive_udp_packet(&src_sock_ip);
-	printf("Received : '%s' from ip %s and port %d\n", msg, 
-			inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
-	perfect_links_deliver(msg, &src_sock_ip);
-	print_msg_sent();
-
-	msg = receive_udp_packet(&src_sock_ip);
-	printf("Received : '%s' from ip %s and port %d\n", msg, 
-			inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
-	perfect_links_deliver(msg, &src_sock_ip);
-	print_msg_sent();
-
-	msg = receive_udp_packet(&src_sock_ip);
-	printf("Received : '%s' from ip %s and port %d\n", msg, 
-			inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
-	perfect_links_deliver(msg, &src_sock_ip);
-	print_msg_sent();
-
-	msg = receive_udp_packet(&src_sock_ip);
-	printf("Received : '%s' from ip %s and port %d\n", msg, 
-			inet_ntoa(src_sock_ip.sin_addr), ntohs(src_sock_ip.sin_port));
-	perfect_links_deliver(msg, &src_sock_ip);
-	print_msg_sent();
-*/
-	//print_msg_sent();
 	//wait until stopped
-
 	bool printed = false;
 	set_timeout(10.0);
-
 	while(1) {
-		FD_ZERO(&readfds);
-		FD_SET(get_sock_fd(), &readfds);
-
-		struct timespec sleep_time;
-		sleep_time.tv_sec = 0;
-		sleep_time.tv_nsec = 1000;
+		FIFO_listen();
 
 		if (DEBUG_PRINT) {
 			if (times_up() && !printed) {
@@ -185,35 +122,6 @@ int main(int argc, char** argv) {
 				printed = true;
 			}
 		}
-
-		int rv = select(get_sock_fd()+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
-		if (rv == 1) {
-			struct sockaddr_in src_sock_ip;
-			char* msg = receive_udp_packet(&src_sock_ip);
-			char msg_type = NULL;
-			int msg_src = -1;
-			parse_message(msg, &msg_type, &msg_src);
-
-			if (DEBUG_PRINT){
-				printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
-					get_id_from_port(ntohs(src_sock_ip.sin_port)));
-			}
-			//perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
-			urb_deliver(msg, msg_type, msg_src, &src_sock_ip);
-		}
-
-		// resend packet after a timeout in msg_sent if no ack received 
-		resend_packets_if_needed();
-
-		// to ensure urb
-		check_forward_to_deliver();
-
-		nanosleep(&sleep_time, NULL);
-
-		//struct timespec sleep_time;
-		//sleep_time.tv_sec = 1;
-		//sleep_time.tv_nsec = 0;
-		//nanosleep(&sleep_time, NULL);
 	}
 
 	// Free 
@@ -221,4 +129,6 @@ int main(int argc, char** argv) {
 	free_delivered();
 	free_msg_sent();
 	free_process_list();
+	free_forward();
+	free_ack();
 }

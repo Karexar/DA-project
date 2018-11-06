@@ -6,7 +6,7 @@
 #include <string.h>
 #include "process.h"
 
-#define	LOG_SIZE	25
+#define	LOG_SIZE	1024
 
 typedef enum{BROADCAST, DELIVER} Log_type;
 

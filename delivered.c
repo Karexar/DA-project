@@ -12,7 +12,7 @@ void init_delivered() {
 
 	last_seq_delivered = (int*)malloc(get_process_count()*sizeof(int));
 	for(int i=0;i<get_process_count();++i) {
-		last_seq_delivered[i] = -1;
+		last_seq_delivered[i] = 0;
 	}
 }
 

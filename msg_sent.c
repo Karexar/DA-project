@@ -55,10 +55,6 @@ void remove_msg_sent(char* ack_payload, int msg_dst, int msg_src){
 			cur = cur->next;
 		}
 	}
-	if (not_found) {
-		printf("Error : cannot remove msg_sent because it is not found\n");
-		exit(0);
-	}
 }
 
 bool msg_sent_times_up(double t_start) {
