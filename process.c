@@ -45,11 +45,41 @@ int get_process_id() {
 }
 
 char* get_ip_from_id(int process_id) {
-	return p[process_id-1]->ip;
+	int i = 0;
+	while (i < process_count) {
+		if(p[i]->id == process_id) {
+			return p[i]->ip;
+		}
+		++i;
+	}
+	printf("Error : cannot find the given id in the process list\n");
+	exit(0);
+}
+
+int get_id_from_index(int index){
+	return p[index]->id;
+} 
+
+int get_index_from_id(int id) {
+	for (int i=0;i<process_count;++i) {
+		if (p[i]->id == id) {
+			return i;
+		}
+	}
+	printf("Error : cannot find the index corresponding to the given id\n");
+	exit(0);
 }
 
 int get_port_from_id(int process_id) {
-	return p[process_id-1]->port;
+	int i = 0;
+	while (i < process_count) {
+		if(p[i]->id == process_id) {
+			return p[i]->port;
+		}
+		++i;
+	}
+	printf("Error : cannot find the given id in the process list\n");
+	exit(0);
 }
 
 int get_process_count() {

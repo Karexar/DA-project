@@ -16,6 +16,8 @@ void init_process(char* filename, int id);
 void create_process_list(char* filename);
 int get_process_id();
 char* get_ip_from_id(int process_id);
+int get_id_from_index(int index);
+int get_index_from_id(int id);
 int get_port_from_id(int process_id);
 int get_process_count();
 int get_id_from_port(int port);

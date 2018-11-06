@@ -89,8 +89,8 @@ void broadcast(char* payload, int msg_src, bool log_it) {
 	}
 	// Broadcast the message by iterating over all other processes
 	for (int i=0;i<get_process_count();++i) {
-		if (i != get_process_id()-1) {
-			int msg_dst = i+1;
+		if (get_id_from_index(i) != get_process_id()) {
+			int msg_dst = get_id_from_index(i);
 			perfect_links_send(payload, msg_src, msg_dst);
 	    }
 	}
@@ -155,7 +155,7 @@ void FIFO_listen() {
 	if (rv == 1) {
 		struct sockaddr_in src_sock_ip;
 		char* msg = receive_udp_packet(&src_sock_ip);
-		char msg_type = NULL;
+		char msg_type = '\0';
 		int msg_src = -1;
 		parse_message(msg, &msg_type, &msg_src);
 

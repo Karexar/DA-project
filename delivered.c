@@ -6,8 +6,7 @@ static int delivered_len = 0;
 static int* last_seq_delivered;
 
 void init_delivered() {
-	// TODO : increase size if needed (we are not sure every process broadcast the same amount)
-	delivered_total_len = 1000*(get_process_count()-1);
+	delivered_total_len = 5000;
 	delivered = calloc(delivered_total_len, sizeof(Delivered));
 
 	last_seq_delivered = (int*)malloc(get_process_count()*sizeof(int));
@@ -17,21 +16,31 @@ void init_delivered() {
 }
 
 int get_last_seq_delivered(int process_id) {
-	return last_seq_delivered[process_id-1];
+	return last_seq_delivered[get_index_from_id(process_id)];
 }
 
 void add_delivered(char* msg, int src_process_id) {
+	if (delivered_len >= delivered_total_len) {
+		delivered_total_len*=2;
+		delivered = realloc(delivered, delivered_total_len*sizeof(Delivered));
+		printf("realloc\n");
+		if (!delivered) {
+			printf("Error : realloc failed in add_delivered\n");
+			exit(0);
+		}
+	}
+
 	// Update logs
 	add_logs(src_process_id, msg, DELIVER);
 	delivered[delivered_len].src_id = src_process_id;
 	delivered[delivered_len].msg = msg;
 	++delivered_len;
 	int seq = atoi(msg);
-	if (seq <= last_seq_delivered[src_process_id-1]) {
+	if (seq <= last_seq_delivered[get_index_from_id(src_process_id)]) {
 		printf("Error : Delivered message sequence does not respect FIFO\n");
 		exit(0);
 	}
-	last_seq_delivered[src_process_id-1] = seq;
+	last_seq_delivered[get_index_from_id(src_process_id)] = seq;
 }
 
 bool not_delivered_yet(char* msg, int src_id) {

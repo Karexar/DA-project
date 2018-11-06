@@ -93,9 +93,6 @@ int main(int argc, char** argv) {
 	
 	int seq = 1;
 	for (int i = 0 ; i < total_broadcast ; ++i) {
-		if (DEBUG_PRINT) {
-			printf("Sending 's %d %d' to process %d\n", process_id, seq, i);
-		}
 		// Convert the sequence number into string
 		char* payload = (char*)malloc(16);
 		sprintf(payload, "%d", seq);
