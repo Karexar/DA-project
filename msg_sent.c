@@ -2,7 +2,7 @@
 
 static Msg_sent* msg_sent_first = NULL;
 static Msg_sent* msg_sent_last = NULL;
-double time_out = 1.0; // TODO : adjust
+double time_out = 0.2;
 
 void add_msg_sent(char* payload, int msg_src, int dst_process_id){
 	if (msg_sent_first == NULL) {

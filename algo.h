@@ -25,6 +25,7 @@
 #include "process.h"
 #include "setting.h"
 #include "timer.h"
+#include "clock.h"
 
 void init_beb();
 void init_urb();

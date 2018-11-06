@@ -40,13 +40,6 @@ void perfect_links_send(char* payload, int msg_src, int dst_process_id){
 	send_udp_packet(msg, dst_process_id);
 	// Then we add it to the list
 	add_msg_sent(payload, msg_src, dst_process_id);
-
-
-	/*struct timespec tstart={0,0}, tend={0,0};
-	clock_gettime(CLOCK_MONOTONIC, &tstart);*/
-
-	/*clock_gettime(CLOCK_MONOTONIC, &tend);
-	printf("%.5f seconds\n", ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));*/
 }
 
 void perfect_links_deliver(char* msg, char msg_type, int msg_src, 

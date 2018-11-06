@@ -15,6 +15,7 @@
 #include "forward.h"
 #include "ack.h"
 #include "setting.h"
+#include "clock.h"
 
 // udp
 #include <unistd.h> 
@@ -99,6 +100,7 @@ int main(int argc, char** argv) {
 		++seq;
 		broadcast(payload, process_id, true);
 	}
+	
 
 
 	//wait until stopped

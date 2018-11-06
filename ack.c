@@ -122,20 +122,6 @@ bool acked_by_half(char* msg, int src) {
 	return false;
 }
 
-/*bool acked_by_half(int index) {
-	int count = 0;
-	for(int i=0;i<from_total_len;++i) {
-		if (acks[index].from[i] != -1) {
-			++count;
-		}
-	}
-	printf("count %d/%d\n", count+1, get_process_count());
-	// +1 because this process has also the message
-	if(count+1 > get_process_count() / 2.0) {
-		return true;
-	}
-	return false;
-}*/
 
 void print_ack() {
 	for(int i=0;i<acks_len;++i) {
