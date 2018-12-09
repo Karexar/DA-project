@@ -19,6 +19,7 @@ void init_urb() {
 
 void init_causal(char* membership_file) {
 	init_dependencies(membership_file);
+	init_vector_clock();
 	init_urb();
 }
 

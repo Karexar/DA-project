@@ -14,6 +14,7 @@ typedef struct Process{
 
 void init_process(char* filename, int id);
 void create_process_list(char* filename);
+Process** get_processes();
 int get_process_id();
 char* get_ip_from_id(int process_id);
 int get_id_from_index(int index);

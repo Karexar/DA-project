@@ -27,6 +27,7 @@
 #include "timer.h"
 #include "clock.h"
 #include "dependencies.h"
+#include "vector_clock.h"
 
 void init_beb();
 void init_urb();

@@ -62,6 +62,14 @@ void init_dependencies(char* membership_file) {
     }
 }
 
+/*int get_size_dependencies() {
+    return size_dependencies;
+}
+
+int* get_dependencies() {
+    return dependencies;
+}*/
+
 void print_dependencies() {
     printf("Dependencies :\n");
     for (int i=0;i < size_dependencies;++i) {

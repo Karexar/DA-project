@@ -40,6 +40,10 @@ void create_process_list(char* filename) {
 	}
 }
 
+Process** get_processes() {
+	return p;
+}
+
 int get_process_id() {
 	return process_id;
 }

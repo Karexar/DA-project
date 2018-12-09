@@ -16,6 +16,8 @@
 #include "ack.h"
 #include "setting.h"
 #include "clock.h"
+#include "dependencies.h"
+#include "vector_clock.h"
 
 // udp
 #include <unistd.h> 
@@ -131,4 +133,5 @@ int main(int argc, char** argv) {
 	free_forward();
 	free_ack();
 	free_dependencies();
+	free_vector_clock();
 }
