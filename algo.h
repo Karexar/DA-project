@@ -39,5 +39,6 @@ void broadcast(char* payload, int msg_src, bool log_it);
 void urb_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr);
 void FIFO_listen();
+void causal_broadcast(char* payload, int msg_src, bool log_it);
 
 #endif

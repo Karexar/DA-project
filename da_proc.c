@@ -100,11 +100,10 @@ int main(int argc, char** argv) {
 		char* payload = (char*)malloc(16);
 		sprintf(payload, "%d", seq);
 		++seq;
-		broadcast(payload, process_id, true);
+		causal_broadcast(payload, process_id, true);
+		free(payload);
 	}
 	
-
-
 	//wait until stopped
 	bool printed = false;
 	set_timeout(10.0);

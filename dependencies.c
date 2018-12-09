@@ -62,13 +62,18 @@ void init_dependencies(char* membership_file) {
     }
 }
 
-/*int get_size_dependencies() {
+int get_size_dependencies() {
     return size_dependencies;
 }
 
-int* get_dependencies() {
-    return dependencies;
-}*/
+bool is_a_dependency(int process_id) {
+    for (int i=0;i<size_dependencies;++i) {
+        if(dependencies[i] == process_id) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void print_dependencies() {
     printf("Dependencies :\n");

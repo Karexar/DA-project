@@ -5,6 +5,8 @@
 #include <stdlib.h>
 
 #include "process.h"
+#include "utils.h"
+#include "dependencies.h"
 
 /*
 This file manage vector clocks. So for each process, we have a list of
@@ -34,6 +36,8 @@ typedef struct Vector_clock_elem{
 } Vector_clock_elem;
 
 void init_vector_clock();
+void increment_vc(int id);
+char* get_VC_of_dependencies();
 //bool compare_vector_clock();
 //char* get_vector_clock();
 void print_vector_clock();

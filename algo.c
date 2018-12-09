@@ -172,3 +172,31 @@ void FIFO_listen() {
 	// to ensure urb
 	check_forward_to_deliver();
 }
+
+//===============  Causal broadcast  =================
+
+void causal_broadcast(char* payload, int msg_src, bool log_it) {
+	// Update logs
+	if (log_it) {
+		add_logs(msg_src, payload, BROADCAST);
+	}
+
+	// Add the VC to the payload
+	char* vc = get_VC_of_dependencies();
+	char new_payload[strlen(vc)+strlen(payload)+1];
+	sprintf(new_payload, "%s\n%s", payload, vc);
+	free(vc);
+	vc=NULL;
+
+	// Broadcast the message by iterating over all other processes
+	for (int i=0;i<get_process_count();++i) {
+		if (get_id_from_index(i) != get_process_id()) {
+			int msg_dst = get_id_from_index(i);
+			perfect_links_send(new_payload, msg_src, msg_dst);
+	    }
+	}
+
+	// Increase corresponding entry
+	increment_vc(get_process_id());
+}
+
