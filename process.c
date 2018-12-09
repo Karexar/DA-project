@@ -29,11 +29,11 @@ void create_process_list(char* filename) {
 		for (int i=0;i<process_count;++i) {	
 			// for each process, allocate the memory and fill the struct
 			p[i] = (Process*)malloc(sizeof(Process));
-			char *s = get_word(f);
+			char *s = get_word(f, NULL, NULL);
 			p[i]->id = atoi(s);
-			s = get_word(f);
+			s = get_word(f, NULL, NULL);
 			p[i]->ip = s;
-			s = get_word(f);
+			s = get_word(f, NULL, NULL);
 			p[i]->port = atoi(s);
 		}
 		fclose(f);

@@ -26,9 +26,11 @@
 #include "setting.h"
 #include "timer.h"
 #include "clock.h"
+#include "dependencies.h"
 
 void init_beb();
 void init_urb();
+void init_causal(char* membership_file);
 void perfect_links_send(char* payload, int msg_src, int dst_process_id);
 void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr);

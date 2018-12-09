@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 	init_logs(process_id);
 
 	// Initialize everything we need concerning the distributed algorithms
-	init_urb();
+	init_causal(filename);
 
 	// Initialize random number generator (debug only)
 	init_random();
@@ -130,4 +130,5 @@ int main(int argc, char** argv) {
 	free_process_list();
 	free_forward();
 	free_ack();
+	free_dependencies();
 }

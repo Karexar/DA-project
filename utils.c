@@ -25,15 +25,21 @@ char* get_main_arg(int argc, char** argv, int index, Type type) {
 // Assume the cursor is at the beginning of the word
 // Let the cursor after the first separator
 // NEED TO FREE
-char* get_word(FILE* f) {
+char* get_word(FILE* f, bool* end_of_line, bool* end_of_file) {
 	int length = 32;
 	char *s = (char*)malloc(length);
 	int j = 0;
 	bool keep_going = 1;
 	while (j < length-1 && keep_going) {
 		s[j] = fgetc(f);
-		if (s[j] == '\n' || s[j] == ' ') {
+		if (s[j] == '\n' || s[j] == ' ' || s[j] == EOF) {
 			keep_going = 0;
+			if (s[j] == '\n' && end_of_line != NULL) {
+				*end_of_line = true;
+			}
+			else if (s[j] == EOF && end_of_file != NULL) {
+				*end_of_file = true;
+			}
 		}
 		else {
 			++j;

@@ -17,6 +17,11 @@ void init_urb() {
 	init_ack();
 }
 
+void init_causal(char* membership_file) {
+	init_dependencies(membership_file);
+	init_urb();
+}
+
 // Send a message to a given destination over perfect links
 // We have to ensure validity :
 // If pi and pj are correct, then every message sent by 
