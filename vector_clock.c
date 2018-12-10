@@ -104,7 +104,7 @@ void parse_vc(char* msg, char** payload, Vector_clock_elem** vc, int* vc_size) {
 	}
 }
 
-
+// return true if the current VC is equal or higher than the one received in parameter
 bool compare_vector_clock(Vector_clock_elem* vc, int vc_size) {
 	for (int i=0;i<vc_size;++i) {
 		// find the corresponding entry in the current vc

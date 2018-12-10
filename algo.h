@@ -28,6 +28,7 @@
 #include "clock.h"
 #include "dependencies.h"
 #include "vector_clock.h"
+#include "vc_pending.h"
 
 void init_beb();
 void init_urb();
@@ -36,8 +37,7 @@ void perfect_links_send(char* payload, int msg_src, int dst_process_id);
 void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr);
 void broadcast(char* payload, int msg_src, bool log_it);
-void urb_deliver(char* msg, char msg_type, int msg_src, 
-						   struct sockaddr_in * src_sock_addr);
+void urb_deliver(char* msg, char msg_type, int msg_src, int from_id);
 void FIFO_listen();
 void causal_broadcast(char* payload, int msg_src, bool log_it);
 void causal_listen();

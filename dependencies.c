@@ -7,7 +7,7 @@ void init_dependencies(char* membership_file) {
     FILE *f = fopen(membership_file, "r");
     if(f == NULL) {
         printf("Cannot open '%s'\n", membership_file);
-        exit(0);
+        exit(1);
     }
     else {
         // Skip the lines corresponding to the processes specifications

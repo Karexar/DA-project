@@ -8,7 +8,7 @@ void init_forward(){
 	forwards = calloc(forwards_total_len, sizeof(Forward));
 	if (!forwards) {
 		printf("Error : calloc failed in init_forward\n");
-		exit(0);
+		exit(1);
 	}
 }
 
@@ -31,7 +31,7 @@ void add_forward(char* msg, int src){
 		forwards = realloc(forwards, forwards_total_len*sizeof(Forward));
 		if (!forwards) {
 			printf("Error : realloc failed in add_forward\n");
-			exit(0);
+			exit(1);
 		}
 
 	}

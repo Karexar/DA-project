@@ -10,7 +10,7 @@ void init_logs(){
 	FILE *log_file = fopen(log_file_name, "w");
 	if(log_file == NULL) {
 		printf("Cannot open '%s'\n", log_file_name);
-		exit(0);
+		exit(1);
 	}
 	else {
 		// Nothing to do, we created an empty file
@@ -49,7 +49,7 @@ void add_logs(int src, char* payload, Log_type log_type){
 	}
 	else {
 		printf("Error : unknown Log_type");
-		exit(0);
+		exit(1);
 	}
 }
 
@@ -60,7 +60,7 @@ void write_logs() {
 		FILE *log_file = fopen(log_file_name, "a");
 		if(log_file == NULL) {
 			printf("Cannot open '%s'\n", log_file_name);
-			exit(0);
+			exit(1);
 		}
 		else {
 			fprintf(log_file, "%s", logs);

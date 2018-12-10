@@ -77,7 +77,7 @@ void perfect_links_deliver(char* msg, char msg_type, int msg_src,
 	}
 	else {
 		printf("Error : unknown message type\n");
-		exit(0);
+		exit(1);
 	}
 }
 
@@ -96,9 +96,7 @@ void broadcast(char* payload, int msg_src, bool log_it) {
 }
 
 
-void urb_deliver(char* msg, char msg_type, int msg_src, 
-						   struct sockaddr_in * src_sock_addr){
-	int from_id = get_id_from_sock_addr(src_sock_addr);
+void urb_deliver(char* msg, char msg_type, int msg_src, int from_id){
 	// If this is not an ack, we send an ack back to the source
 	if (msg_type == 's') {
 		if (DEBUG_PRINT) {
@@ -138,7 +136,7 @@ void urb_deliver(char* msg, char msg_type, int msg_src,
 	}
 	else {
 		printf("Error : unknown message type\n");
-		exit(0);
+		exit(1);
 	}
 }
 
@@ -163,7 +161,8 @@ void FIFO_listen() {
 				get_id_from_port(ntohs(src_sock_ip.sin_port)));
 		}
 		//perfect_links_deliver(msg, msg_type, msg_src, &src_sock_ip);
-		urb_deliver(msg, msg_type, msg_src, &src_sock_ip);
+		int from_id = get_id_from_sock_addr(&src_sock_ip);
+		urb_deliver(msg, msg_type, msg_src, from_id);
 	}
 
 	// resend packet after a timeout in msg_sent if no ack received 
@@ -210,6 +209,9 @@ void causal_listen() {
 
 	int rv = select(get_sock_fd()+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
 	if (rv == 1) {
+		// Todo : put vc management in causal_deliver, such that 
+		// we can send an ack directly when we receive the msg, 
+		// instead of waiting for the vc to complete
 		struct sockaddr_in src_sock_ip;
 		char* msg = receive_udp_packet(&src_sock_ip);
 		char msg_type = '\0';
@@ -227,18 +229,19 @@ void causal_listen() {
 		msg = NULL;
 
 		// if this is not an ack, we have to check the vc
+		int from_id = get_id_from_sock_addr(&src_sock_ip);
 		if(msg_type == 's') {
 			// if the corresponding vc of the current process are equal or higher 
 			// than the entries of the received vc, then we can urb_deliver 
-			if (compare_vector_clock(vc, vc_size)) { // TODO
-				urb_deliver(payload, msg_type, msg_src, &src_sock_ip);
+			if (compare_vector_clock(vc, vc_size)) {
+				urb_deliver(payload, msg_type, msg_src, from_id);
 			}
 			else {
-				// TODO : add to pending 
+				add_VC_pending(msg_src, payload, vc, vc_size, from_id);
 			}
 		}
 		else {
-			urb_deliver(payload, msg_type, msg_src, &src_sock_ip);
+			urb_deliver(payload, msg_type, msg_src, from_id);
 		}
 	}
 
@@ -249,4 +252,7 @@ void causal_listen() {
 	check_forward_to_deliver();
 
 	// TODO : check vc_pending
+	// Check the pending msg and urb_deliver those whose VC is now equal 
+	// or less than the local VC
+	check_pending_vc_to_urb_deliver();
 }

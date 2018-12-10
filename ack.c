@@ -9,7 +9,7 @@ void init_ack() {
 	acks = calloc(acks_total_len, sizeof(Ack));
 	if (!acks) {
 		printf("Error : calloc failed in init_ack\n");
-		exit(0);
+		exit(1);
 	}
 	from_total_len = get_process_count()-1;
 	for (int i=0;i<acks_total_len;++i) {
@@ -23,7 +23,7 @@ void create_empty_from_list(int index) {
 	acks[index].from = (int*)malloc(from_total_len*sizeof(int));
 	if (!acks[index].from) {
 		printf("Error : calloc failed in create_empty_ack\n");
-		exit(0);
+		exit(1);
 	}
 	for (int j=0;j<from_total_len;++j) {
 		acks[index].from[j] = -1;
@@ -59,7 +59,7 @@ void add_ack(char* msg, int src, int from) {
 			acks = realloc(acks, acks_total_len*sizeof(Ack));
 			if (!acks) {
 				printf("Error : realloc failed in add_ack\n");
-				exit(0);
+				exit(1);
 			}
 			for (int i=acks_len;i<acks_total_len;++i) {
 				create_empty_from_list(i);
@@ -70,7 +70,7 @@ void add_ack(char* msg, int src, int from) {
 		acks[acks_len].msg = (char*)malloc(strlen(msg)+1);
 		if (!acks[acks_len].msg) {
 			printf("Error : malloc failed in add_ack\n");
-			exit(0);
+			exit(1);
 		}
 		strcpy(acks[acks_len].msg, msg);
 		acks[acks_len].from[0] = from;
@@ -98,7 +98,7 @@ void add_ack(char* msg, int src, int from) {
 			}
 			if (not_added) {
 				printf("Error : cannot add 'from' to Ack\n");
-				exit(0);
+				exit(1);
 			}
 		}
 	}

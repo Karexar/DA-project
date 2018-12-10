@@ -26,7 +26,7 @@ void add_delivered(char* msg, int src_process_id) {
 		printf("realloc\n");
 		if (!delivered) {
 			printf("Error : realloc failed in add_delivered\n");
-			exit(0);
+			exit(1);
 		}
 	}
 
@@ -38,7 +38,7 @@ void add_delivered(char* msg, int src_process_id) {
 	int seq = atoi(msg);
 	if (seq <= last_seq_delivered[get_index_from_id(src_process_id)]) {
 		printf("Error : Delivered message sequence does not respect FIFO\n");
-		exit(0);
+		exit(1);
 	}
 	last_seq_delivered[get_index_from_id(src_process_id)] = seq;
 }

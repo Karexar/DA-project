@@ -16,7 +16,7 @@ void create_process_list(char* filename) {
 	FILE *f = fopen(filename, "r");
 	if(f == NULL) {
 		printf("Cannot open '%s'\n", filename);
-		exit(0);
+		exit(1);
 	}
 	else {
 		// Get the first line
@@ -57,7 +57,7 @@ char* get_ip_from_id(int process_id) {
 		++i;
 	}
 	printf("Error : cannot find the given id in the process list\n");
-	exit(0);
+	exit(1);
 }
 
 int get_id_from_index(int index){
@@ -71,7 +71,7 @@ int get_index_from_id(int id) {
 		}
 	}
 	printf("Error : cannot find the index corresponding to the given id\n");
-	exit(0);
+	exit(1);
 }
 
 int get_port_from_id(int process_id) {
@@ -83,7 +83,7 @@ int get_port_from_id(int process_id) {
 		++i;
 	}
 	printf("Error : cannot find the given id in the process list\n");
-	exit(0);
+	exit(1);
 }
 
 int get_process_count() {
@@ -97,7 +97,7 @@ int get_id_from_port(int port) {
 		}
 	}
 	printf("Error : Could not find id corresponding to that port");
-	exit(0);
+	exit(1);
 }
 
 void free_process_list() {

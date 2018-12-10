@@ -9,7 +9,7 @@ void add_msg_sent(char* payload, int msg_src, int dst_process_id){
 		msg_sent_first = malloc(sizeof(Msg_sent));
 		if (!msg_sent_first){
 			printf("Error : cannot allocate memory for msg_sent_first");
-			exit(0);
+			exit(1);
 		}
 		msg_sent_last = msg_sent_first;
 	}
@@ -17,7 +17,7 @@ void add_msg_sent(char* payload, int msg_src, int dst_process_id){
 		msg_sent_last->next = malloc(sizeof(Msg_sent));
 		if (!msg_sent_last->next){
 			printf("Error : cannot allocate memory for msg_sent_first");
-			exit(0);
+			exit(1);
 		}
 		msg_sent_last = msg_sent_last->next;
 	}

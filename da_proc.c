@@ -49,7 +49,7 @@ static void stop(int signum) {
 	write_logs(process_id);
 
 	//exit directly from signal handler
-	exit(0);
+	exit(1);
 }
 
 
