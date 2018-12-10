@@ -38,8 +38,8 @@ typedef struct Vector_clock_elem{
 void init_vector_clock();
 void increment_vc(int id);
 char* get_VC_of_dependencies();
-//bool compare_vector_clock();
-//char* get_vector_clock();
+void parse_vc(char* msg, char** payload, Vector_clock_elem** vc, int* vc_size);
+bool compare_vector_clock(Vector_clock_elem* vc, int vc_size);
 void print_vector_clock();
 void free_vector_clock();
 

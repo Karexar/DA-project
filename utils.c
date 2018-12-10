@@ -79,3 +79,4 @@ void parse_message(char* msg, char* msg_type, int* msg_src) {
 	}
 	sprintf(msg, "%.*s", len_payload, msg+(i-len_payload));
 }
+

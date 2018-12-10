@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
 	bool printed = false;
 	set_timeout(10.0);
 	while(1) {
-		FIFO_listen();
+		causal_listen();
 
 		if (DEBUG_PRINT) {
 			if (times_up() && !printed) {

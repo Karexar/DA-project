@@ -200,3 +200,53 @@ void causal_broadcast(char* payload, int msg_src, bool log_it) {
 	increment_vc(get_process_id());
 }
 
+void causal_listen() {
+	FD_ZERO(&readfds);
+	FD_SET(get_sock_fd(), &readfds);
+
+	struct timespec sleep_time;
+	sleep_time.tv_sec = 0;
+	sleep_time.tv_nsec = 1000;
+
+	int rv = select(get_sock_fd()+1, &readfds, NULL, NULL, (struct timeval*) &sleep_time);
+	if (rv == 1) {
+		struct sockaddr_in src_sock_ip;
+		char* msg = receive_udp_packet(&src_sock_ip);
+		char msg_type = '\0';
+		int msg_src = -1;
+		parse_message(msg, &msg_type, &msg_src);
+		if (DEBUG_PRINT){
+			printf("Received : '%c %d %s' from process %d\n", msg_type, msg_src, msg, 
+				get_id_from_port(ntohs(src_sock_ip.sin_port)));
+		}
+		char* payload = NULL;
+		Vector_clock_elem* vc = NULL;
+		int vc_size = 0;
+		parse_vc(msg, &payload, &vc, &vc_size);
+		free(msg);
+		msg = NULL;
+
+		// if this is not an ack, we have to check the vc
+		if(msg_type == 's') {
+			// if the corresponding vc of the current process are equal or higher 
+			// than the entries of the received vc, then we can urb_deliver 
+			if (compare_vector_clock(vc, vc_size)) { // TODO
+				urb_deliver(payload, msg_type, msg_src, &src_sock_ip);
+			}
+			else {
+				// TODO : add to pending 
+			}
+		}
+		else {
+			urb_deliver(payload, msg_type, msg_src, &src_sock_ip);
+		}
+	}
+
+	// resend packet after a timeout in msg_sent if no ack received 
+	resend_packets_if_needed();
+
+	// to ensure urb
+	check_forward_to_deliver();
+
+	// TODO : check vc_pending
+}
