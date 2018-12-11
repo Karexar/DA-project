@@ -97,46 +97,22 @@ void broadcast(char* payload, int msg_src, bool log_it) {
 
 
 void urb_deliver(char* msg, char msg_type, int msg_src, int from_id){
-	// If this is not an ack, we send an ack back to the source
-	if (msg_type == 's') {
+	// Then we check if the message is not already in the forward table
+	// and if the source of the message is not this process (self)
+	if (not_forwarded_yet(msg, msg_src) && msg_src != get_process_id()) {
+		// If it's not forwarded, we add the message to the forward
+		// list and broadcast the message to every processes
+		add_forward(msg, msg_src);
 		if (DEBUG_PRINT) {
-			printf("Sending ack 'a %d %s' to process %d\n", msg_src, msg, from_id);
+			printf("Broadcast [%d, %s]\n", msg_src, msg);
 		}
-		char ack_msg[strlen(msg)+16];
-		sprintf(ack_msg, "a\n%d\n%s", msg_src, msg);
-		send_udp_packet(ack_msg, from_id);
-
-		// First we add the sender to the ack list for this message
-		// because if it sends it, it means he has this message. 
-		add_ack(msg, msg_src, from_id);
-
-		// Then we check if the message is not already in the forward table
-		// and if the source of the message is not this process (self)
-		if (not_forwarded_yet(msg, msg_src) && msg_src != get_process_id()) {
-			// If it's not forwarded, we add the message to the forward
-			// list and broadcast the message to every processes
-			add_forward(msg, msg_src);
-			if (DEBUG_PRINT) {
-				printf("Broadcast [%d, %s]\n", msg_src, msg);
-			}
-			broadcast(msg, msg_src, false);
-		}
-		else {
-			// The message is already in the forward list
-			// There is nothing to do left with this message
-			free(msg);
-			msg = NULL;
-		}
-	}
-	// If this is an ack, we remove the waiting entry
-	else if (msg_type == 'a') {
-		remove_msg_sent(msg, from_id, msg_src);
-		free(msg);
-		msg = NULL;
+		broadcast(msg, msg_src, false);
 	}
 	else {
-		printf("Error : unknown message type\n");
-		exit(1);
+		// The message is already in the forward list
+		// There is nothing to do left with this message
+		free(msg);
+		msg = NULL;
 	}
 }
 
@@ -224,24 +200,51 @@ void causal_listen() {
 		char* payload = NULL;
 		Vector_clock_elem* vc = NULL;
 		int vc_size = 0;
-		parse_vc(msg, &payload, &vc, &vc_size);
+		if (msg_type == 's') {
+			parse_vc(msg, &payload, &vc, &vc_size);
+		}
 		free(msg);
 		msg = NULL;
 
-		// if this is not an ack, we have to check the vc
 		int from_id = get_id_from_sock_addr(&src_sock_ip);
-		if(msg_type == 's') {
-			// if the corresponding vc of the current process are equal or higher 
-			// than the entries of the received vc, then we can urb_deliver 
+
+		// First we have to manage the acks
+		if (msg_type == 'a') {
+			// If the message is an ack, we remove the waiting entry in msg_sent
+			remove_msg_sent(msg, from_id, msg_src);
+			free(msg);
+			msg = NULL;
+		}
+		else if (msg_type == 's') {
+			// If the message is not an ack, we have to ack it
+			if (DEBUG_PRINT) {
+				printf("Sending ack 'a %d %s' to process %d\n", msg_src, payload, from_id);
+			}
+			char ack_msg[strlen(payload)+16];
+			sprintf(ack_msg, "a\n%d\n%s", msg_src, payload);
+			send_udp_packet(ack_msg, from_id);
+
+			// Add the sender to the ack list for this message
+			// because if it sends it, it means he has this message. 
+			add_ack(msg, msg_src, from_id);
+
+			// Now we have to verify the vc to deliver the message or 
+			// to add it to the vc_pending. 
 			if (compare_vector_clock(vc, vc_size)) {
+				// The local vc is greater or equal to the received vc
+				// for all entries, we can urb_deliver
 				urb_deliver(payload, msg_type, msg_src, from_id);
 			}
 			else {
+				// The local vc is lower than the received vc for at 
+				// least one entry, we add the message to the vc_pending
+				// list. We will urb_deliver it later.
 				add_VC_pending(msg_src, payload, vc, vc_size, from_id);
 			}
 		}
 		else {
-			urb_deliver(payload, msg_type, msg_src, from_id);
+			printf("Error : unknown message type\n");
+			exit(1);
 		}
 	}
 
@@ -251,8 +254,8 @@ void causal_listen() {
 	// to ensure urb
 	check_forward_to_deliver();
 
-	// TODO : check vc_pending
 	// Check the pending msg and urb_deliver those whose VC is now equal 
 	// or less than the local VC
 	check_pending_vc_to_urb_deliver();
 }
+
