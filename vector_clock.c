@@ -41,67 +41,56 @@ char* get_VC_of_dependencies() {
 	// Add all vc entries corresponding to a dependency to the string
 	for (int i=0;i<size_vector_clock;++i) {
 		if(is_a_dependency(vector_clock[i].process_id)) {
-			if (i+1==size_vector_clock) {
-				sprintf(dep_string, "%s%d %d", dep_string, vector_clock[i].process_id, vector_clock[i].msg_count);
-			}
-			else {
-				sprintf(dep_string, "%s%d %d\n", dep_string, vector_clock[i].process_id, vector_clock[i].msg_count);
-			}
+			sprintf(dep_string, "%s%d %d\n", dep_string, vector_clock[i].process_id, vector_clock[i].msg_count);
 		}
+	}
+	if (strlen(dep_string) > 0) {
+		dep_string[strlen(dep_string)-1] = '\0';
 	}
 	return dep_string;
 }
 
-void parse_vc(char* msg, char** payload, Vector_clock_elem** vc, int* vc_size) {
-	int i = 0;
-	int nb_lines = 1;
-	// count the number of lines
-	while (i < strlen(msg)) {
-		if (msg[i] == '\n') {
-			++nb_lines;
-		}
-		++i;
-	}
-	*vc_size = nb_lines-1;
-	if (nb_lines > 1) {
-		// rewind and read the first one (the payload)
-		*payload=(char*)malloc(11);
-		i=0;
-		while (msg[i] != '\n') {
-			(*payload)[i] = msg[i];
+void parse_vc(char* vc_str, Vector_clock_elem** vc, int* vc_size) {
+	if (strlen(vc_str) > 1) {
+		int i = 0;
+		int nb_lines = 1;
+		// count the number of lines
+		while (i < strlen(vc_str)) {
+			if (vc_str[i] == '\n' && vc_str[i+1] != '\0') {
+				++nb_lines;
+			}
 			++i;
 		}
-		(*payload)[i] = '\0';
-		++i;
-		if (msg[i] != '\0') {
-			*vc=(Vector_clock_elem*)malloc(nb_lines*sizeof(Vector_clock_elem));
-			for (int line=0;line<nb_lines;++line) {
-				// read id
-				char id_string[11];
-				int j= 0;
-				while (msg[i+j]!=' ') {
-					id_string[j] = msg[i+j];
-					++j;
-				}
-				id_string[j] = '\0';
-				// read msg count
-				i = i+j+1;
-				char msg_count_string[11];
-				j = 0;
-				while (msg[i+j]!='\n' && msg[i+j]!='\0') {
-					msg_count_string[j] = msg[i+j];
-					++j;
-				}
-				msg_count_string[j]='\0';
-				i = i+j+1;
-				(*vc)[line].process_id = atoi(id_string);
-				(*vc)[line].msg_count = atoi(msg_count_string);
+		*vc_size = nb_lines;
+		
+		// read the vc
+		i=0;
+		*vc=(Vector_clock_elem*)malloc(nb_lines*sizeof(Vector_clock_elem));
+
+		for (int vc_line=0;vc_line<*vc_size;++vc_line) {
+			// read id
+			char id_string[11];
+			int j= 0;
+			while (vc_str[i+j]!=' ') {
+				id_string[j] = vc_str[i+j];
+				++j;
 			}
-		}
-		else {
-			*vc_size = 0;
+			id_string[j] = '\0';
+			// read msg count
+			i = i+j+1;
+			char msg_count_string[11];
+			j = 0;
+			while (vc_str[i+j]!='\n' && vc_str[i+j]!='\0') {
+				msg_count_string[j] = vc_str[i+j];
+				++j;
+			}
+			msg_count_string[j]='\0';
+			i = i+j+1;
+			(*vc)[vc_line].process_id = atoi(id_string);
+			(*vc)[vc_line].msg_count = atoi(msg_count_string);
 		}
 	}
+	
 }
 
 // return true if the current VC is equal or higher than the one received in parameter

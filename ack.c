@@ -131,7 +131,9 @@ void print_ack() {
 		}
 		printf("]]");
 	} 
-	printf("\n");
+	if (acks_len > 0) {
+		printf("\n");
+	}
 }
 
 void free_ack() {
@@ -146,4 +148,5 @@ void free_ack() {
 		}
 	}
 	free(acks);
+	acks=NULL;
 }

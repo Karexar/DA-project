@@ -4,37 +4,58 @@ static Msg_sent* msg_sent_first = NULL;
 static Msg_sent* msg_sent_last = NULL;
 double time_out = 0.2;
 
-void add_msg_sent(char* payload, int msg_src, int dst_process_id){
-	if (msg_sent_first == NULL) {
-		msg_sent_first = malloc(sizeof(Msg_sent));
-		if (!msg_sent_first){
-			printf("Error : cannot allocate memory for msg_sent_first");
-			exit(1);
+bool msg_already_in_msg_sent(int msg_src, char* payload, int msg_dst) {
+	struct Msg_sent* cur = msg_sent_first;
+	bool not_found = true;
+	while(not_found && cur) {
+		if (strcmp(cur->payload, payload) == 0 && cur->dst == msg_dst && cur->src == msg_src){
+			not_found = false;
 		}
-		msg_sent_last = msg_sent_first;
-	}
-	else {
-		msg_sent_last->next = malloc(sizeof(Msg_sent));
-		if (!msg_sent_last->next){
-			printf("Error : cannot allocate memory for msg_sent_first");
-			exit(1);
+		else{
+			cur = cur->next;
 		}
-		msg_sent_last = msg_sent_last->next;
 	}
-	msg_sent_last->payload = payload;
-	msg_sent_last->msg_dst = dst_process_id;
-	msg_sent_last->msg_src = msg_src;
-	msg_sent_last->t_start = get_cur_time();
-	msg_sent_last->next = NULL;
+	return !not_found;
 }
 
-void remove_msg_sent(char* ack_payload, int msg_dst, int msg_src){
+void add_msg_sent(int msg_src, char* payload, char* vc_str, int dst){
+	if (!msg_already_in_msg_sent(msg_src, payload, dst)) {
+		if (msg_sent_first == NULL) {
+			msg_sent_first = malloc(sizeof(Msg_sent));
+			if (!msg_sent_first){
+				printf("Error : cannot allocate memory for msg_sent_first");
+				exit(1);
+			}
+			msg_sent_last = msg_sent_first;
+		}
+		else {
+			msg_sent_last->next = malloc(sizeof(Msg_sent));
+			if (!msg_sent_last->next){
+				printf("Error : cannot allocate memory for msg_sent_first");
+				exit(1);
+			}
+			msg_sent_last = msg_sent_last->next;
+		}
+		msg_sent_last->src = msg_src;
+		char* new_payload = (char*)malloc(strlen(payload)+1);
+		strcpy(new_payload, payload);
+		msg_sent_last->payload = new_payload;
+		char* new_vc_str = (char*)malloc(strlen(vc_str)+1);
+		strcpy(new_vc_str, vc_str);
+		msg_sent_last->vc_str = new_vc_str;
+		msg_sent_last->dst = dst;
+		msg_sent_last->t_start = get_cur_time();
+		msg_sent_last->next = NULL;
+	}
+}
+
+void remove_msg_sent(int msg_src, char* payload, int msg_dst) {
 	struct Msg_sent* prev = NULL;
 	struct Msg_sent* cur = msg_sent_first;
 
 	bool not_found = true;
 	while(not_found && cur) {
-		if (strcmp(cur->payload, ack_payload) == 0 && cur->msg_dst == msg_dst && cur->msg_src == msg_src){
+		if (strcmp(cur->payload, payload) == 0 && cur->dst == msg_dst && cur->src == msg_src){
 			not_found = false;
 			if (!cur->next) {
 				msg_sent_last = prev;
@@ -47,8 +68,17 @@ void remove_msg_sent(char* ack_payload, int msg_dst, int msg_src){
 			}
 			prev = cur;
 			cur = cur->next;
+			free(prev->payload);
+			prev->payload = NULL;
+			if (prev->vc_str){
+				free(prev->vc_str);
+				prev->vc_str = NULL;
+			}
 			free(prev);
 			prev = NULL;
+			if (DEBUG_PRINT) {
+				printf("Removing from msg_sent : (payload:%s src:%d, dst:%d)\n", payload, msg_src, msg_dst);
+			}
 		}
 		else{
 			prev = cur;
@@ -76,12 +106,22 @@ void resend_packets_if_needed() {
 	Msg_sent* cur_msg_sent = msg_sent_first;
 	if (cur_msg_sent) {
 		while(cur_msg_sent && msg_sent_times_up(cur_msg_sent->t_start)) {
-			char* new_msg = (char*)malloc(strlen(cur_msg_sent->payload)+16);
-			sprintf(new_msg, "s\n%d\n%s", cur_msg_sent->msg_src, cur_msg_sent->payload);
 			if (DEBUG_PRINT) {
-				printf("Resend packet 's %d %s' to process %d\n", cur_msg_sent->msg_src, cur_msg_sent->payload, cur_msg_sent->msg_dst);
+				printf("Resend packet {src:%d payload:%s vc:%s dst:%d}\n", 
+					cur_msg_sent->src, cur_msg_sent->payload, cur_msg_sent->vc_str, 
+					cur_msg_sent->dst);
 			}
-			perfect_links_send(cur_msg_sent->payload, cur_msg_sent->msg_src, cur_msg_sent->msg_dst);
+			// We save the values because we need to remove the msg_sent before 
+			// calling perfect_links_send, otherwise perfect_links_send will
+			// detect that the message is already in the list, and will ingore it
+			int src = cur_msg_sent->src;
+			char payload[strlen(cur_msg_sent->payload)];
+			strcpy(payload, cur_msg_sent->payload);
+			char vc_str[strlen(cur_msg_sent->vc_str)];
+			strcpy(vc_str, cur_msg_sent->vc_str);
+			int dst = cur_msg_sent->dst;
+
+			// Remove this msg sent from the linked list
 			if (prev_msg_sent){
 				// If there is a message before the current message
 				prev_msg_sent->next = cur_msg_sent->next;
@@ -95,16 +135,18 @@ void resend_packets_if_needed() {
 				msg_sent_first = cur_msg_sent->next;
 				prev_msg_sent = msg_sent_first;
 				if (msg_sent_first) {
-					// Si il y a au moins message
+					// If there is at least one message
 					cur_msg_sent = msg_sent_first->next;
 				}
 				else {
-					// Si il ne reste aucun message dans la liste
+					// If there is no message left in the list
 					cur_msg_sent = NULL;
 					msg_sent_last = NULL;
 				}
 			}
-			//print_first_n_msg_sent(5);
+
+			// Resend it
+			perfect_links_send('s', src, payload, vc_str, dst);
 		}
 	}
 }
@@ -113,13 +155,9 @@ void print_msg_sent(){
 	printf("First : %p\n", msg_sent_first);
 	Msg_sent* tmp = msg_sent_first;
 	while (tmp != NULL) {
-		printf("Msg : %s at %p\n", tmp->payload, tmp);
-		printf("  Dst id : %d\n", tmp->msg_dst);
-		printf("  Src id : %d\n", tmp->msg_src);
-		printf("  Next : %p\n", tmp->next);
+		printf("{src:%d payload:%s vc:%s dst:%d}\n", tmp->src, tmp->payload, tmp->vc_str, tmp->dst);
 		tmp = tmp->next;
 	}
-	printf("Last : %p\n", msg_sent_last);
 }
 
 void print_first_n_msg_sent(int n){
@@ -127,7 +165,7 @@ void print_first_n_msg_sent(int n){
 	printf("%p", msg_sent_first);
 	for (int i=0;i<n;++i){
 		if (tmp) {
-			printf("{dst:%d, %s}", tmp->msg_src, tmp->payload);
+			printf("{src:%d payload:%s vc:%s dst:%d}", tmp->src, tmp->payload, tmp->vc_str, tmp->dst);
 			tmp = tmp->next;
 		}
 	}
@@ -142,6 +180,10 @@ void free_msg_sent(){
 		if (tmp->payload) {
 			free(tmp->payload);
 			tmp->payload = NULL;
+		}
+		if (tmp->vc_str) {
+			free(tmp->vc_str);
+			tmp->vc_str = NULL;
 		}
 		free(tmp);
 		tmp = tmp_next;

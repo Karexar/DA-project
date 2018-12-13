@@ -87,9 +87,11 @@ int main(int argc, char** argv) {
 	
 	// Wait until start signal
 	// Start listening for incoming UDP packets
-	while(wait_for_start) {
-		FIFO_listen();
-	}
+	// TODO REMOVE
+	sleep(2);
+	/*while(wait_for_start) {
+		causal_listen();
+	}*/
 
 	//broadcast messages
 	printf("Broadcasting %d messages.\n", total_broadcast);
@@ -100,8 +102,7 @@ int main(int argc, char** argv) {
 		char* payload = (char*)malloc(16);
 		sprintf(payload, "%d", seq);
 		++seq;
-		causal_broadcast(payload, process_id, true);
-		free(payload);
+		causal_broadcast(payload);
 	}
 	
 	//wait until stopped

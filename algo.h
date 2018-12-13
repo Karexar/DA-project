@@ -33,13 +33,13 @@
 void init_beb();
 void init_urb();
 void init_causal(char* membership_file);
-void perfect_links_send(char* payload, int msg_src, int dst_process_id);
+void perfect_links_send(char msg_type, int msg_src, char* payload, char* vc, int dst);
 void perfect_links_deliver(char* msg, char msg_type, int msg_src, 
 						   struct sockaddr_in * src_sock_addr);
-void broadcast(char* payload, int msg_src, bool log_it);
-void urb_deliver(char* msg, char msg_type, int msg_src, int from_id);
+void broadcast(char* payload, int msg_src, char* vc, bool log_it);
+void urb_deliver(int msg_src, char* payload, char* vc_str);
 void FIFO_listen();
-void causal_broadcast(char* payload, int msg_src, bool log_it);
+void causal_broadcast(char* payload);
 void causal_listen();
 
 #endif

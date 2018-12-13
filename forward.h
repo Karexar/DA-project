@@ -10,13 +10,14 @@
 
 
 typedef struct Forward{
-	char* msg;
+	char* payload;
 	int src;
+	char* vc_str;
 } Forward;
 
 void init_forward();
 bool not_forwarded_yet(char* msg, int src);
-void add_forward(char* msg, int src);
+void add_forward(char* payload, int src, char* vc_str);
 void check_forward_to_deliver();
 void print_forward();
 void free_forward();

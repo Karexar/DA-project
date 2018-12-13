@@ -1,3 +1,3 @@
 #include "utils.h"
 
-#define	DEBUG_PRINT		false
+#define	DEBUG_PRINT		true
