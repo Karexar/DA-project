@@ -40,9 +40,12 @@ void add_msg_sent(int msg_src, char* payload, char* vc_str, int dst){
 		char* new_payload = (char*)malloc(strlen(payload)+1);
 		strcpy(new_payload, payload);
 		msg_sent_last->payload = new_payload;
-		char* new_vc_str = (char*)malloc(strlen(vc_str)+1);
-		strcpy(new_vc_str, vc_str);
-		msg_sent_last->vc_str = new_vc_str;
+		msg_sent_last->vc_str = NULL;
+		if (vc_str != NULL) {
+			char* new_vc_str = (char*)malloc(strlen(vc_str)+1);
+			strcpy(new_vc_str, vc_str);
+			msg_sent_last->vc_str = new_vc_str;
+		}
 		msg_sent_last->dst = dst;
 		msg_sent_last->t_start = get_cur_time();
 		msg_sent_last->next = NULL;
@@ -117,8 +120,12 @@ void resend_packets_if_needed() {
 			int src = cur_msg_sent->src;
 			char payload[strlen(cur_msg_sent->payload)];
 			strcpy(payload, cur_msg_sent->payload);
-			char vc_str[strlen(cur_msg_sent->vc_str)];
-			strcpy(vc_str, cur_msg_sent->vc_str);
+
+			char* vc_str = NULL;
+			if (cur_msg_sent->vc_str != NULL) {
+				vc_str = (char*)malloc(strlen(cur_msg_sent->vc_str));
+				strcpy(vc_str, cur_msg_sent->vc_str);
+			}
 			int dst = cur_msg_sent->dst;
 
 			// Remove this msg sent from the linked list
@@ -147,6 +154,9 @@ void resend_packets_if_needed() {
 
 			// Resend it
 			perfect_links_send('s', src, payload, vc_str, dst);
+			if (vc_str != NULL) {
+				free(vc_str);
+			}
 		}
 	}
 }

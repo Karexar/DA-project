@@ -51,7 +51,7 @@ char* get_VC_of_dependencies() {
 }
 
 void parse_vc(char* vc_str, Vector_clock_elem** vc, int* vc_size) {
-	if (strlen(vc_str) > 1) {
+	if (vc_str != NULL && strlen(vc_str) > 1) {
 		int i = 0;
 		int nb_lines = 1;
 		// count the number of lines
@@ -95,14 +95,16 @@ void parse_vc(char* vc_str, Vector_clock_elem** vc, int* vc_size) {
 
 // return true if the current VC is equal or higher than the one received in parameter
 bool compare_vector_clock(Vector_clock_elem* vc, int vc_size) {
-	for (int i=0;i<vc_size;++i) {
-		// find the corresponding entry in the current vc
-		for (int j=0;j<size_vector_clock;++j) {
-			// if the current process receive less messages from 
-			// the dependency than what the src received, we have to wait
-			if (vc[i].process_id == vector_clock[j].process_id &&
-				vc[i].msg_count > vector_clock[j].msg_count) {
-				return false;
+	if (vc != NULL){
+		for (int i=0;i<vc_size;++i) {
+			// find the corresponding entry in the current vc
+			for (int j=0;j<size_vector_clock;++j) {
+				// if the current process receive less messages from 
+				// the dependency than what the src received, we have to wait
+				if (vc[i].process_id == vector_clock[j].process_id &&
+					vc[i].msg_count > vector_clock[j].msg_count) {
+					return false;
+				}
 			}
 		}
 	}

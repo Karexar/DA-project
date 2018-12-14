@@ -27,9 +27,12 @@ bool not_forwarded_yet(char* payload, int src) {
 
 void add_forward(char* payload, int src, char* vc_str){
 	char* new_payload = (char*)malloc(strlen(payload)+1);
-	char* new_vc_str = (char*)malloc(strlen(vc_str)+1);
 	strcpy(new_payload, payload);
-	strcpy(new_vc_str, vc_str);
+	char* new_vc_str = NULL;
+	if (vc_str != NULL) {
+		new_vc_str = (char*)malloc(strlen(vc_str)+1);
+		strcpy(new_vc_str, vc_str);
+	}
 	if (forwards_len >= forwards_total_len) {
 		forwards_total_len*=2;
 		forwards = realloc(forwards, forwards_total_len*sizeof(Forward));

@@ -41,13 +41,19 @@ void perfect_links_send(char msg_type, int msg_src, char* payload, char* vc_str,
 	// Source process : the very origin of the message
 	// Payload : the sequence number
 	// Vector clock : the message count for each dependency
-	char msg[13+strlen(payload)+strlen(vc_str)+1];
+	int len = 13+strlen(payload)+1;
+	if (vc_str != NULL) {
+		len += strlen(vc_str);
+	}
+	char msg[len];
 	sprintf(msg, "s\n%d\n%s", msg_src, payload);
 	if (vc_str != NULL && vc_str[0] != '\0') {
 		sprintf(msg, "%s\n%s", msg, vc_str);
 	}
 	// First we send the packet over UDP
-	printf("P%d send : {type:%c src:%d payload%s vc:%s}\n", get_process_id(), msg_type, msg_src, payload, vc_str);
+	if (DEBUG_PRINT) {
+		printf("P%d send : {type:%c src:%d payload%s vc:%s}\n", get_process_id(), msg_type, msg_src, payload, vc_str);
+	}
 	send_udp_packet(msg, dst);
 	// Then we add it to the msg_sent list
 	add_msg_sent(msg_src, payload, vc_str, dst);
@@ -223,8 +229,12 @@ void causal_listen() {
 			if (DEBUG_PRINT) {
 				printf("Sending ack {src:%d payload:%s from:%d}\n", msg_src, payload, from_id);
 			}
-			
-			char ack_msg[13+strlen(payload)+strlen(vc_str)];
+	
+			int len = 13+strlen(payload)+1;
+			if (vc_str) {
+				len += strlen(vc_str);
+			}
+			char ack_msg[len];
 			sprintf(ack_msg, "a\n%d\n%s", msg_src, payload);
 			send_udp_packet(ack_msg, from_id);
 			// Add the sender to the ack list for this message
@@ -246,6 +256,7 @@ void causal_listen() {
 				// list. We will urb_deliver it later.
 				add_VC_pending(msg_src, payload, vc, vc_size, vc_str, from_id);
 			}
+
 		}
 		else {
 			printf("Error : unknown message type\n");
