@@ -51,6 +51,8 @@ do
     fi
 done
 
+sleep 0.01
+
 # do some more nasty stuff
 # example:
 kill -TERM "${da_proc_id[4]}" # crash process 4
