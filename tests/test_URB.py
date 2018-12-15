@@ -77,7 +77,7 @@ def checkValidity(nb_proc, logs, corrects):
                         if other_proc != 0:
                             otherProcessID = other_proc[0]
                         
-                            if otherProcessID != currentProcessID:
+                            if otherProcessID != currentProcessID and otherProcessID in corrects:
                                 
                                 # Reset the boolean check
                                 isDelivered = False
@@ -98,9 +98,9 @@ def checkValidity(nb_proc, logs, corrects):
                                             break
                                         
                                 if not isDelivered:
-                                    print("Error of Validity: Process " + otherProcessID
+                                    print("Error of Validity: Process " + str(otherProcessID)
                                     + " has failed to deliver message " + str(mi)
-                                    + " from Process " + str(i+1))
+                                    + " from Process " + str(currentProcessID))
                                     noError = False
                                     #sys.exit()
     
