@@ -37,29 +37,40 @@ sleep $init_time
 
 # do some nasty stuff like process crashes and delays
 # example:
-kill -STOP "${da_proc_id[5]}" # pause process 3
+kill -STOP "${da_proc_id[5]}" # pause process 5
 sleep 1
-kill -TERM "${da_proc_id[4]}" # crash process 2
+kill -TERM "${da_proc_id[6]}" # crash process 6
 da_proc_id[2]=""
-kill -CONT "${da_proc_id[5]}" # resume process 3
+kill -CONT "${da_proc_id[5]}" # resume process 5
 
 # start broadcasting
-for i in `seq 3 7`
-do
-    if [ -n "${da_proc_id[$i]}" ]; then
-	kill -USR2 "${da_proc_id[$i]}"
-    fi
-done
+#for i in `seq 3 7`
+#do
+#    if [ -n "${da_proc_id[$i]}" ]; then
+#	kill -USR2 "${da_proc_id[$i]}"
+#    fi
+#done
+
+kill -USR2 "${da_proc_id[7]}"
+
+sleep 1
+
+kill -USR2 "${da_proc_id[3]}"
+
+sleep 1
+
+kill -USR2 "${da_proc_id[4]}"
+kill -USR2 "${da_proc_id[5]}"
 
 sleep 0.01
 
 # do some more nasty stuff
 # example:
-kill -TERM "${da_proc_id[6]}" # crash process 4
+kill -TERM "${da_proc_id[6]}" # crash process 6
 da_proc_id[4]=""
-kill -STOP "${da_proc_id[3]}" # pause process 1
+kill -STOP "${da_proc_id[3]}" # pause process 3
 sleep 0.5
-kill -CONT "${da_proc_id[3]}" # resume process 1
+kill -CONT "${da_proc_id[3]}" # resume process 3
 
 # leave some time for the correct processes to broadcast all messages
 sleep $time_to_finish
