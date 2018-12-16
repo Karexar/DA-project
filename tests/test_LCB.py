@@ -8,13 +8,13 @@ def main():
     #corrects = [int(x) for x in input().split()]
     #print(corrects)
     
-    # Set dependencies
+    # Change the dependencies here if you change the processes' IDs
     affectations = [None] * 5
-    affectations[0] = [4, 5]
-    affectations[1] = [1]
-    affectations[2] = [1, 2]
+    affectations[0] = [6, 7]
+    affectations[1] = [3]
+    affectations[2] = [3, 4]
     affectations[3] = []
-    affectations[4] = [3, 4]
+    affectations[4] = [5, 6]
     
     nb_proc = len(total_procs)
     
@@ -59,76 +59,86 @@ def checkVC(nb_proc, logs):
     for i in range(nb_proc):
         
         current_proc = logs[i]
-        current_proc_ID = current_proc[0][0]
-        current_proc_affectations = current_proc[0][1]
         
-        # Iterate over all the messages of the current process
-        for mi in range(1, len(current_proc)):
+        # If the logs are not empty
+        if current_proc != 0:
+        
+            current_proc_ID = current_proc[0][0]
+            current_proc_affectations = current_proc[0][1]
             
-            # Get the next message which is a 'deliver'
-            if current_proc[mi][0] == 'd':
+            # Iterate over all the messages of the current process
+            for mi in range(1, len(current_proc)):
                 
-                # Store the sender's ID and msg's ID
-                senderID = current_proc[mi][1]
-                msgID = current_proc[mi][2]
-                
-                if senderID in current_proc_affectations:
-                
-                    # Iterate over all processes to find the sender one
-                    for j in range(nb_proc):
-                        
-                        # Store the other process infos
-                        other_proc = logs[j]
-                        other_process_ID = other_proc[0][0]
-                        other_process_affectations = other_proc[0][1]
-                        
-                        if other_process_ID == senderID:
-                        
-                            # Iterate over all 'broadcast' msgs in the other
-                            # process to find the corresponding msg
-                            for mj in range(1, len(logs[j])):
-                                other_msg = other_proc[mj]
+                # Get the next message which is a 'deliver'
+                if current_proc[mi][0] == 'd':
+                    
+                    # Store the sender's ID and msg's ID
+                    senderID = int(current_proc[mi][1])
+                    msgID = int(current_proc[mi][2])
+                    
+                    if int(senderID) in current_proc_affectations:
+                    
+                        # Iterate over all processes to find the sender one
+                        for j in range(nb_proc):
+                            
+                            # Store the other process infos
+                            other_proc = logs[j]
+                            
+                            if other_proc != 0:
+                                other_process_ID = int(other_proc[0][0])
+                                other_process_affectations = other_proc[0][1]
                                 
-                                # Find the corresponding broadcast msg
-                                if len(other_msg) != 0 \
-                                and other_msg[0] == 'b' \
-                                and int(other_msg[1]) == int(msgID):
-                                    
-                                    deliverIDs.clear()
-                                    
-                                    # Iterate over all previous deliver messages
-                                    for mk in range(1, mj):
+                                if other_process_ID == senderID:
+                                
+                                    # Iterate over all 'broadcast' msgs in the other
+                                    # process to find the corresponding msg
+                                    for mj in range(1, len(logs[j])):
+                                        other_msg = other_proc[mj]
+                                        other_msg_ID = int(other_msg[1])
                                         
-                                        msg_to_check = other_proc[mk]
-                                        
-                                        # If the sender is in the list of affectations
-                                        if msg_to_check[0] == 'd' \
-                                        and int(msg_to_check[1]) in other_process_affectations:
-                                            deliverIDs.append([int(msg_to_check[1]), int(msg_to_check[2])])
-                                    
+                                        # Find the corresponding broadcast msg
+                                        if len(other_msg) != 0 \
+                                        and other_msg[0] == 'b' \
+                                        and other_msg_ID == msgID:
+                                            
+                                            deliverIDs.clear()
+                                            
+                                            # Iterate over all previous deliver messages
+                                            for mk in range(1, mj):
+                                                
+                                                msg_to_check = other_proc[mk]
+                                                
+                                                # If the sender is in the list of affectations
+                                                if msg_to_check[0] == 'd' \
+                                                and int(msg_to_check[1]) in other_process_affectations:
+                                                    deliverIDs.append([int(msg_to_check[1]), int(msg_to_check[2])])
+                                                    #print("Adding element.")
+                                            
+                                            
+                                            break
                                     
                                     break
-                            
-                            break
-                            
-                # Check that the deliver messages contained in the sender
-                # were delivered by the current process
-                for ml in range(1, mi):
-                    
-                    current_msg = current_proc[ml]
-                    
-                    if current_msg[0] == 'd':
-                        deliverElement = [int(current_msg[1]), int(current_msg[2])]
+                                
+                    # Check that the deliver messages contained in the sender
+                    # were delivered by the current process
+                    for ml in range(1, mi):
                         
-                        if deliverElement in deliverIDs:
-                            deliverIDs.remove(deliverElement)
-                         
-                
-                if len(deliverIDs) != 0:
-                    print("Error of VC: Current process " + current_proc_ID
-                          + " did not deliver all messages delivered by Process "
-                          + other_process_ID)
-                    noError = False
+                        current_msg = current_proc[ml]
+                        
+                        if current_msg[0] == 'd':
+                            deliverElement = [int(current_msg[1]), int(current_msg[2])]
+                            
+                            if deliverElement in deliverIDs:
+                                deliverIDs.remove(deliverElement)
+                                #print("Removing element.")
+                             
+                    
+                    if len(deliverIDs) != 0:
+                        print("Error of VC: Current process " + str(current_proc_ID)
+                              + " did not deliver all messages delivered by Process "
+                              + str(other_process_ID))
+                        print(deliverIDs)
+                        noError = False
                                     
     if noError:
         print("VC specification is correct !")     
