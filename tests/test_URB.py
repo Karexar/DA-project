@@ -43,7 +43,10 @@ def main():
     checkNoDuplication(nb_proc, logs)                   # URB2
     checkNoCreation(nb_proc, logs)                      # URB3
     checkUniformAgreement(nb_proc, logs, corrects)      # URB4
-    
+
+        
+if __name__ == '__main__':
+    main()
 
 
 # 1) Validity: If pi and pj are correct, then every message broadcast by pi
@@ -262,6 +265,3 @@ def checkUniformAgreement(nb_proc, logs, corrects):
     if noError:
         print("Uniform Agreement specification is correct !")
     
-        
-if __name__ == '__main__':
-    main()
